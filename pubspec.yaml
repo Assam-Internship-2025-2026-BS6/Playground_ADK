@@ -4,13 +4,18 @@ publish_to: 'none'
 version: 1.0.0+1
 
 environment:
-  sdk: ^3.10.8
+  sdk: ">=3.0.0 <4.0.0"
 
 dependencies:
   flutter:
     sdk: flutter
+
   designkit:
-    path: ../designkit_hdfc_web/designkit
+    git:
+      url: https://github.com/Assam-Internship-2025-2026-BS6/Flutter-DesignKit-.git
+      ref: develop
+      path: designkit
+
   cupertino_icons: ^1.0.8
 
 dev_dependencies:
@@ -20,6 +25,7 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+
   assets:
     - assets/hdfc_logo.png
     - assets/now_logo.png
