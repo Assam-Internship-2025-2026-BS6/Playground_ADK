@@ -1,0 +1,23 @@
+﻿Analyzing designkit...                                          
+
+warning - The library 'package:flutter/material.dart' doesn't export a member with the hidden name 'Button' - lib\components\atoms\button.dart:2:45 - undefined_hidden_name
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\components\atoms\button.dart:91:39 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\components\atoms\button.dart:95:47 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\components\atoms\button.dart:101:43 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\components\atoms\logo.dart:33:43 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\components\atoms\text_button.dart:55:44 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\components\atoms\text_field.dart:89:61 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\components\atoms\text_field.dart:93:89 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\components\atoms\text_field.dart:113:41 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\components\molecules\digicart_security.dart:52:48 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\components\molecules\digicart_security.dart:56:38 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\components\molecules\digicart_security.dart:57:38 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\components\molecules\qr_container.dart:41:43 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\components\molecules\qr_container.dart:102:52 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\components\molecules\qr_container.dart:160:31 - deprecated_member_use
+   info - The import of 'package:flutter/services.dart' is unnecessary because all of the used elements are also provided by the import of 'package:flutter/material.dart' - lib\components\organisms\landing_form.dart:2:8 - unnecessary_import
+   info - Use 'const' with the constructor to improve performance - lib\presentation\screens\glasscard_screen.dart:16:13 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\presentation\screens\glasscard_screen.dart:17:16 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\presentation\screens\glasscard_screen.dart:20:18 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\presentation\screens\netbanking_login_page.dart:21:16 - prefer_const_constructors
+
