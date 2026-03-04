@@ -1,7 +1,23 @@
 import 'component_metadata.dart';
 import 'package:flutter/material.dart';
-import 'package:designkit/designkit.dart' hide Text, TextField, TextButton, Checkbox, RadioButton, ToggleSwitch, Dropdown;
-import 'package:designkit/designkit.dart' as dk show Text, TextField, TextButton, Checkbox, RadioButton, ToggleSwitch, Dropdown;
+import 'package:designkit/designkit.dart'
+    hide
+        Text,
+        TextField,
+        TextButton,
+        Checkbox,
+        RadioButton,
+        ToggleSwitch,
+        Dropdown;
+import 'package:designkit/designkit.dart' as dk
+    show
+        Text,
+        TextField,
+        TextButton,
+        Checkbox,
+        RadioButton,
+        ToggleSwitch,
+        Dropdown;
 
 final List<ComponentMetadata> componentRegistry = [
   ComponentMetadata(
@@ -13,13 +29,16 @@ final List<ComponentMetadata> componentRegistry = [
     },
     builder: (Map<String, dynamic> props, {bool isFullScreen = false}) {
       return NetBankingLoginPage(
-        width: isFullScreen ? double.infinity : ((props['width'] as num?)?.toDouble() ?? 1000.0),
-        height: isFullScreen ? double.infinity : ((props['height'] as num?)?.toDouble() ?? 950.0),
-        isFullScreen: isFullScreen,
+        width: isFullScreen
+            ? double.infinity
+            : ((props['width'] as num?)?.toDouble() ?? 1000.0),
+        height: isFullScreen
+            ? double.infinity
+            : ((props['height'] as num?)?.toDouble() ?? 950.0),
       );
     },
   ),
-  
+
   // Organisms
   ComponentMetadata(
     name: 'LoginFormSection',
@@ -83,7 +102,8 @@ final List<ComponentMetadata> componentRegistry = [
     builder: (Map<String, dynamic> props, {bool isFullScreen = false}) {
       return QrContainer(
         title: props['title'] ?? 'Click to scan QR and login',
-        subtitle: props['subtitle'] ?? 'New HDFC Bank Early Access App Required',
+        subtitle:
+            props['subtitle'] ?? 'New HDFC Bank Early Access App Required',
         width: (props['width'] as num?)?.toDouble() ?? 484.0,
         height: (props['height'] as num?)?.toDouble() ?? 120.0,
         blur: (props['blur'] as num?)?.toDouble() ?? 15.0,
@@ -213,7 +233,8 @@ final List<ComponentMetadata> componentRegistry = [
         borderRadius: (props['borderRadius'] as num?)?.toDouble() ?? 20.0,
         tintColor: props['tintColor'] ?? Colors.white,
         child: const Center(
-          child: dk.Text(text: 'Glass Card', fontSize: 24.0, color: Colors.black),
+          child:
+              dk.Text(text: 'Glass Card', fontSize: 24.0, color: Colors.black),
         ),
       );
     },
@@ -226,11 +247,9 @@ final List<ComponentMetadata> componentRegistry = [
       'fontSize': 20.0,
       'color': Colors.black,
       'fontWeight': FontWeight.normal,
-      'variant': 'Default',
       'textAlign': 'left',
     },
     options: {
-      'variant': ['Default', 'H1', 'H2', 'Body'],
       'textAlign': ['left', 'center', 'right'],
     },
     builder: (Map<String, dynamic> props, {bool isFullScreen = false}) {
@@ -243,7 +262,6 @@ final List<ComponentMetadata> componentRegistry = [
         fontSize: (props['fontSize'] as num?)?.toDouble(),
         color: props['color'],
         fontWeight: props['fontWeight'],
-        variant: props['variant'] ?? 'Default',
         textAlign: align,
       );
     },
@@ -280,7 +298,6 @@ final List<ComponentMetadata> componentRegistry = [
       'showOutline': true,
       'blur': 10.0,
       'opacity': 0.8,
-      'size': 'Medium',
       'style': 'Glass',
       'isLoading': false,
     },
@@ -294,14 +311,12 @@ final List<ComponentMetadata> componentRegistry = [
         showOutline: props['showOutline'] ?? true,
         blur: (props['blur'] as num?)?.toDouble() ?? 10.0,
         opacity: (props['opacity'] as num?)?.toDouble() ?? 0.8,
-        size: props['size'] ?? 'Medium',
         style: props['style'] ?? 'Glass',
         isLoading: props['isLoading'] ?? false,
         onTap: () => debugPrint('Button Pressed'),
       );
     },
     options: {
-      'size': ['Small', 'Medium', 'Large'],
       'style': ['Glass', 'Primary'],
     },
   ),
@@ -445,30 +460,40 @@ final List<ComponentMetadata> componentRegistry = [
     name: 'HDFC Logo',
     category: 'Assets',
     defaultProps: {'width': 200.0},
-    builder: (Map<String, dynamic> props, {bool isFullScreen = false}) => Image.asset('assets/hdfc_logo.png', width: (props['width'] as num?)?.toDouble() ?? 200.0),
+    builder: (Map<String, dynamic> props, {bool isFullScreen = false}) =>
+        Image.asset('assets/hdfc_logo.png',
+            width: (props['width'] as num?)?.toDouble() ?? 200.0),
   ),
   ComponentMetadata(
     name: 'Left Image',
     category: 'Assets',
     defaultProps: {'width': 400.0},
-    builder: (Map<String, dynamic> props, {bool isFullScreen = false}) => Image.asset('assets/left_image.png', width: (props['width'] as num?)?.toDouble() ?? 400.0),
+    builder: (Map<String, dynamic> props, {bool isFullScreen = false}) =>
+        Image.asset('assets/left_image.png',
+            width: (props['width'] as num?)?.toDouble() ?? 400.0),
   ),
   ComponentMetadata(
     name: 'Lock Icon',
     category: 'Assets',
     defaultProps: {'width': 100.0},
-    builder: (Map<String, dynamic> props, {bool isFullScreen = false}) => Image.asset('assets/lock.png', width: (props['width'] as num?)?.toDouble() ?? 100.0),
+    builder: (Map<String, dynamic> props, {bool isFullScreen = false}) =>
+        Image.asset('assets/lock.png',
+            width: (props['width'] as num?)?.toDouble() ?? 100.0),
   ),
   ComponentMetadata(
     name: 'Now Logo',
     category: 'Assets',
     defaultProps: {'width': 100.0},
-    builder: (Map<String, dynamic> props, {bool isFullScreen = false}) => Image.asset('assets/now_logo.png', width: (props['width'] as num?)?.toDouble() ?? 100.0),
+    builder: (Map<String, dynamic> props, {bool isFullScreen = false}) =>
+        Image.asset('assets/now_logo.png',
+            width: (props['width'] as num?)?.toDouble() ?? 100.0),
   ),
   ComponentMetadata(
     name: 'Right Background',
     category: 'Assets',
     defaultProps: {'width': 400.0},
-    builder: (Map<String, dynamic> props, {bool isFullScreen = false}) => Image.asset('assets/right_back.png', width: (props['width'] as num?)?.toDouble() ?? 400.0),
+    builder: (Map<String, dynamic> props, {bool isFullScreen = false}) =>
+        Image.asset('assets/right_back.png',
+            width: (props['width'] as num?)?.toDouble() ?? 400.0),
   ),
 ];
