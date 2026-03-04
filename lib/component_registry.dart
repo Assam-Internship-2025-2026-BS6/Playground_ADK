@@ -8,13 +8,14 @@ final List<ComponentMetadata> componentRegistry = [
     name: 'NetBankingLoginPage',
     category: 'Pages',
     defaultProps: {
-      'width': 1000.0,
-      'height': 950.0,
+      'width': 1400.0,
+      'height': 1000.0,
     },
-    builder: (Map<String, dynamic> props) {
+    builder: (Map<String, dynamic> props, {bool isFullScreen = false}) {
       return NetBankingLoginPage(
-        width: (props['width'] as num?)?.toDouble() ?? 1000.0,
-        height: (props['height'] as num?)?.toDouble() ?? 950.0,
+        width: isFullScreen ? double.infinity : ((props['width'] as num?)?.toDouble() ?? 1000.0),
+        height: isFullScreen ? double.infinity : ((props['height'] as num?)?.toDouble() ?? 950.0),
+        isFullScreen: isFullScreen,
       );
     },
   ),
@@ -28,7 +29,7 @@ final List<ComponentMetadata> componentRegistry = [
       'height': 850.0,
       'tintColor': const Color(0x33FFFFFF),
     },
-    builder: (Map<String, dynamic> props) {
+    builder: (Map<String, dynamic> props, {bool isFullScreen = false}) {
       return LandingFormOrganism(
         width: (props['width'] as num?)?.toDouble() ?? 500.0,
         height: (props['height'] as num?)?.toDouble() ?? 850.0,
@@ -45,7 +46,7 @@ final List<ComponentMetadata> componentRegistry = [
       'width': 500.0,
       'height': 850.0,
     },
-    builder: (Map<String, dynamic> props) {
+    builder: (Map<String, dynamic> props, {bool isFullScreen = false}) {
       return LeftInfoSection(
         width: (props['width'] as num?)?.toDouble() ?? 500.0,
         height: (props['height'] as num?)?.toDouble() ?? 850.0,
@@ -59,7 +60,7 @@ final List<ComponentMetadata> componentRegistry = [
       'width': 500.0,
       'height': 850.0,
     },
-    builder: (Map<String, dynamic> props) {
+    builder: (Map<String, dynamic> props, {bool isFullScreen = false}) {
       return RightLoginContainer(
         width: (props['width'] as num?)?.toDouble() ?? 500.0,
         height: (props['height'] as num?)?.toDouble() ?? 850.0,
@@ -79,7 +80,7 @@ final List<ComponentMetadata> componentRegistry = [
       'opacity': 0.2,
       'blur': 15.0,
     },
-    builder: (Map<String, dynamic> props) {
+    builder: (Map<String, dynamic> props, {bool isFullScreen = false}) {
       return QrContainer(
         title: props['title'] ?? 'Click to scan QR and login',
         subtitle: props['subtitle'] ?? 'New HDFC Bank Early Access App Required',
@@ -102,7 +103,7 @@ final List<ComponentMetadata> componentRegistry = [
       'opacity': 0.2,
       'blur': 15.0,
     },
-    builder: (Map<String, dynamic> props) {
+    builder: (Map<String, dynamic> props, {bool isFullScreen = false}) {
       return DigicartSecurity(
         title: props['title'] ?? 'Goodbye, Secure Text & Image',
         subtitle: props['subtitle'] ?? 'Hello, Digicert Security',
@@ -123,7 +124,7 @@ final List<ComponentMetadata> componentRegistry = [
       'hintText': 'Enter your ID',
       'width': 700.0,
     },
-    builder: (Map<String, dynamic> props) {
+    builder: (Map<String, dynamic> props, {bool isFullScreen = false}) {
       return LabeledInputField(
         label: props['label'] ?? 'Customer ID/ User ID',
         hintText: props['hintText'] ?? 'Enter your ID',
@@ -139,11 +140,52 @@ final List<ComponentMetadata> componentRegistry = [
       'hintText': 'Enter password',
       'width': 700.0,
     },
-    builder: (Map<String, dynamic> props) {
+    builder: (Map<String, dynamic> props, {bool isFullScreen = false}) {
       return PasswordField(
         label: props['label'] ?? 'Password/ PIN',
         hintText: props['hintText'] ?? 'Enter password',
         width: (props['width'] as num?)?.toDouble() ?? 700.0,
+      );
+    },
+  ),
+  ComponentMetadata(
+    name: 'Dropdown',
+    category: 'Molecules',
+    defaultProps: {
+      'label': 'Select Account',
+      'value': 'Savings Account - 1234',
+      'items': [
+        'Savings Account - 1234',
+        'Current Account - 5678',
+        'Fixed Deposit - 9012',
+      ],
+      'width': 300.0,
+      'activeColor': const Color(0xFF1E1E4C),
+      'size': 1.0,
+      'xOffset': 0.0,
+      'yOffset': 0.0,
+    },
+    builder: (Map<String, dynamic> props, {bool isFullScreen = false}) {
+      return StatefulBuilder(
+        builder: (context, setState) {
+          return dk.Dropdown(
+            label: props['label'],
+            value: props['value'],
+            items: List<String>.from(props['items'] ?? []),
+            width: (props['width'] as num?)?.toDouble() ?? 300.0,
+            activeColor: props['activeColor'] ?? const Color(0xFF1E1E4C),
+            size: (props['size'] as num?)?.toDouble() ?? 1.0,
+            offset: Offset(
+              (props['xOffset'] as num?)?.toDouble() ?? 0.0,
+              (props['yOffset'] as num?)?.toDouble() ?? 0.0,
+            ),
+            onChanged: (val) {
+              setState(() {
+                props['value'] = val;
+              });
+            },
+          );
+        },
       );
     },
   ),
@@ -154,14 +196,14 @@ final List<ComponentMetadata> componentRegistry = [
     category: 'Atoms',
     defaultProps: {
       'width': 550.0,
-      'height': 700.0,
+      'height': 300.0,
       'opacity': 0.12,
       'blur': 15.0,
       'showShadow': true,
       'borderRadius': 20.0,
       'tintColor': Colors.white,
     },
-    builder: (Map<String, dynamic> props) {
+    builder: (Map<String, dynamic> props, {bool isFullScreen = false}) {
       return GlassCard(
         width: (props['width'] as num?)?.toDouble(),
         height: (props['height'] as num?)?.toDouble(),
@@ -171,7 +213,7 @@ final List<ComponentMetadata> componentRegistry = [
         borderRadius: (props['borderRadius'] as num?)?.toDouble() ?? 20.0,
         tintColor: props['tintColor'] ?? Colors.white,
         child: const Center(
-          child: Text('Glass Card', style: TextStyle(color: Colors.black, fontSize: 24.0)),
+          child: dk.Text(text: 'Glass Card', fontSize: 24.0, color: Colors.black),
         ),
       );
     },
@@ -184,13 +226,25 @@ final List<ComponentMetadata> componentRegistry = [
       'fontSize': 20.0,
       'color': Colors.black,
       'fontWeight': FontWeight.normal,
+      'variant': 'Default',
+      'textAlign': 'left',
     },
-    builder: (Map<String, dynamic> props) {
+    options: {
+      'variant': ['Default', 'H1', 'H2', 'Body'],
+      'textAlign': ['left', 'center', 'right'],
+    },
+    builder: (Map<String, dynamic> props, {bool isFullScreen = false}) {
+      TextAlign align = TextAlign.left;
+      if (props['textAlign'] == 'center') align = TextAlign.center;
+      if (props['textAlign'] == 'right') align = TextAlign.right;
+
       return dk.Text(
         text: props['text'] ?? 'Hello World',
-        fontSize: (props['fontSize'] as num?)?.toDouble() ?? 20.0,
-        color: props['color'] ?? Colors.black,
-        fontWeight: props['fontWeight'] ?? FontWeight.normal,
+        fontSize: (props['fontSize'] as num?)?.toDouble(),
+        color: props['color'],
+        fontWeight: props['fontWeight'],
+        variant: props['variant'] ?? 'Default',
+        textAlign: align,
       );
     },
   ),
@@ -204,7 +258,7 @@ final List<ComponentMetadata> componentRegistry = [
       'width': 700.0,
       'showErrorText': false,
     },
-    builder: (Map<String, dynamic> props) {
+    builder: (Map<String, dynamic> props, {bool isFullScreen = false}) {
       return dk.TextField(
         hintText: props['hintText'] ?? 'Enter text',
         isPassword: props['isPassword'] ?? false,
@@ -222,23 +276,33 @@ final List<ComponentMetadata> componentRegistry = [
       'width': 321.0,
       'height': 61.0,
       'disabled': false,
-      'color': const Color(0xFF5371F9),
+      'color': const Color.fromARGB(255, 41, 84, 255),
       'showOutline': true,
       'blur': 10.0,
       'opacity': 0.8,
+      'size': 'Medium',
+      'style': 'Glass',
+      'isLoading': false,
     },
-    builder: (Map<String, dynamic> props) {
+    builder: (Map<String, dynamic> props, {bool isFullScreen = false}) {
       return Button(
         text: props['text'] ?? 'Know More',
-        width: (props['width'] as num?)?.toDouble() ?? 321.0,
-        height: (props['height'] as num?)?.toDouble() ?? 61.0,
+        width: (props['width'] as num?)?.toDouble(),
+        height: (props['height'] as num?)?.toDouble(),
         disabled: props['disabled'] ?? false,
         color: props['color'] ?? const Color(0xFF5371F9),
         showOutline: props['showOutline'] ?? true,
         blur: (props['blur'] as num?)?.toDouble() ?? 10.0,
         opacity: (props['opacity'] as num?)?.toDouble() ?? 0.8,
-        onTap: () => debugPrint('Know More Pressed'),
+        size: props['size'] ?? 'Medium',
+        style: props['style'] ?? 'Glass',
+        isLoading: props['isLoading'] ?? false,
+        onTap: () => debugPrint('Button Pressed'),
       );
+    },
+    options: {
+      'size': ['Small', 'Medium', 'Large'],
+      'style': ['Glass', 'Primary'],
     },
   ),
   ComponentMetadata(
@@ -253,7 +317,7 @@ final List<ComponentMetadata> componentRegistry = [
       'xOffset': 0.0,
       'yOffset': 0.0,
     },
-    builder: (Map<String, dynamic> props) {
+    builder: (Map<String, dynamic> props, {bool isFullScreen = false}) {
       return dk.Checkbox(
         value: false, // Internal state will take over after first render
         label: props['label'],
@@ -279,7 +343,7 @@ final List<ComponentMetadata> componentRegistry = [
       'isClickable': true,
       'enableHover': true,
     },
-    builder: (Map<String, dynamic> props) {
+    builder: (Map<String, dynamic> props, {bool isFullScreen = false}) {
       return dk.TextButton(
         text: props['text'] ?? 'Click Me',
         fontSize: (props['fontSize'] as num?)?.toDouble() ?? 24.0,
@@ -296,7 +360,7 @@ final List<ComponentMetadata> componentRegistry = [
       'width': 240.0,
       'height': 31.0,
     },
-    builder: (Map<String, dynamic> props) {
+    builder: (Map<String, dynamic> props, {bool isFullScreen = false}) {
       return Logo(
         width: (props['width'] as num?)?.toDouble() ?? 240.0,
         height: (props['height'] as num?)?.toDouble() ?? 31.0,
@@ -316,7 +380,7 @@ final List<ComponentMetadata> componentRegistry = [
       'xOffset': 0.0,
       'yOffset': 0.0,
     },
-    builder: (Map<String, dynamic> props) {
+    builder: (Map<String, dynamic> props, {bool isFullScreen = false}) {
       return StatefulBuilder(
         builder: (context, setState) {
           return dk.RadioButton(
@@ -353,7 +417,7 @@ final List<ComponentMetadata> componentRegistry = [
       'xOffset': 0.0,
       'yOffset': 0.0,
     },
-    builder: (Map<String, dynamic> props) {
+    builder: (Map<String, dynamic> props, {bool isFullScreen = false}) {
       return StatefulBuilder(
         builder: (context, setState) {
           return dk.ToggleSwitch(
@@ -376,76 +440,35 @@ final List<ComponentMetadata> componentRegistry = [
       );
     },
   ),
-  ComponentMetadata(
-    name: 'Dropdown',
-    category: 'Atoms',
-    defaultProps: {
-      'label': 'Select Account',
-      'value': 'Savings Account - 1234',
-      'items': [
-        'Savings Account - 1234',
-        'Current Account - 5678',
-        'Fixed Deposit - 9012',
-      ],
-      'width': 300.0,
-      'activeColor': const Color(0xFF1E1E4C),
-      'size': 1.0,
-      'xOffset': 0.0,
-      'yOffset': 0.0,
-    },
-    builder: (Map<String, dynamic> props) {
-      return StatefulBuilder(
-        builder: (context, setState) {
-          return dk.Dropdown(
-            label: props['label'],
-            value: props['value'],
-            items: List<String>.from(props['items'] ?? []),
-            width: (props['width'] as num?)?.toDouble() ?? 300.0,
-            activeColor: props['activeColor'] ?? const Color(0xFF1E1E4C),
-            size: (props['size'] as num?)?.toDouble() ?? 1.0,
-            offset: Offset(
-              (props['xOffset'] as num?)?.toDouble() ?? 0.0,
-              (props['yOffset'] as num?)?.toDouble() ?? 0.0,
-            ),
-            onChanged: (val) {
-              setState(() {
-                props['value'] = val;
-              });
-            },
-          );
-        },
-      );
-    },
-  ),
   // Assets
   ComponentMetadata(
     name: 'HDFC Logo',
     category: 'Assets',
     defaultProps: {'width': 200.0},
-    builder: (Map<String, dynamic> props) => Image.asset('assets/hdfc_logo.png', width: (props['width'] as num?)?.toDouble() ?? 200.0),
+    builder: (Map<String, dynamic> props, {bool isFullScreen = false}) => Image.asset('assets/hdfc_logo.png', width: (props['width'] as num?)?.toDouble() ?? 200.0),
   ),
   ComponentMetadata(
     name: 'Left Image',
     category: 'Assets',
     defaultProps: {'width': 400.0},
-    builder: (Map<String, dynamic> props) => Image.asset('assets/left_image.png', width: (props['width'] as num?)?.toDouble() ?? 400.0),
+    builder: (Map<String, dynamic> props, {bool isFullScreen = false}) => Image.asset('assets/left_image.png', width: (props['width'] as num?)?.toDouble() ?? 400.0),
   ),
   ComponentMetadata(
     name: 'Lock Icon',
     category: 'Assets',
     defaultProps: {'width': 100.0},
-    builder: (Map<String, dynamic> props) => Image.asset('assets/lock.png', width: (props['width'] as num?)?.toDouble() ?? 100.0),
+    builder: (Map<String, dynamic> props, {bool isFullScreen = false}) => Image.asset('assets/lock.png', width: (props['width'] as num?)?.toDouble() ?? 100.0),
   ),
   ComponentMetadata(
     name: 'Now Logo',
     category: 'Assets',
     defaultProps: {'width': 100.0},
-    builder: (Map<String, dynamic> props) => Image.asset('assets/now_logo.png', width: (props['width'] as num?)?.toDouble() ?? 100.0),
+    builder: (Map<String, dynamic> props, {bool isFullScreen = false}) => Image.asset('assets/now_logo.png', width: (props['width'] as num?)?.toDouble() ?? 100.0),
   ),
   ComponentMetadata(
     name: 'Right Background',
     category: 'Assets',
     defaultProps: {'width': 400.0},
-    builder: (Map<String, dynamic> props) => Image.asset('assets/right_back.png', width: (props['width'] as num?)?.toDouble() ?? 400.0),
+    builder: (Map<String, dynamic> props, {bool isFullScreen = false}) => Image.asset('assets/right_back.png', width: (props['width'] as num?)?.toDouble() ?? 400.0),
   ),
 ];

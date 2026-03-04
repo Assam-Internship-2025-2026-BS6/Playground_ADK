@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:designkit/components/atoms/text.dart' as dk;
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/services.dart';
+// ignore: avoid_web_libraries_in_flutter
+import 'dart:html' as html;
 import 'component_registry.dart';
 import 'component_metadata.dart';
 import 'package:designkit/components/atoms/glass_container.dart';
@@ -14,19 +19,20 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
   ComponentMetadata? selectedComponent;
   Map<String, dynamic> currentProps = {};
   bool isMobile = false;
+  bool _isFullScreen = false;
   final Map<String, TextEditingController> _controllers = {};
   int _refreshCounter = 0;
   String _searchQuery = "";
   late TextEditingController _searchController;
-
+  
   double _sidebarWidth = 320.0;
   double _propertiesWidth = 320.0;
   final double _minPanelWidth = 300.0;
   final double _maxPanelWidth = 800.0;
-
+  
   bool _isHoveringLeftHandle = false;
   bool _isHoveringRightHandle = false;
-
+  
   // Track expansion state for categories
   final Map<String, bool> _expandedCategories = {
     "Atoms": false,
@@ -45,13 +51,40 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
       currentProps = Map.from(selectedComponent!.defaultProps);
       _updateControllers();
     }
+
+    if (kIsWeb) {
+      html.document.onFullscreenChange.listen((event) {
+        if (html.document.fullscreenElement == null && mounted) {
+          setState(() {
+            _isFullScreen = false;
+          });
+        }
+      });
+    }
+  }
+
+  void _toggleFullScreen(bool value) {
+    setState(() {
+      _isFullScreen = value;
+      isMobile = false; // Always desktop for true fullscreen
+    });
+
+    if (kIsWeb) {
+      if (value) {
+        html.document.documentElement?.requestFullscreen();
+      } else {
+        if (html.document.fullscreenElement != null) {
+          html.document.exitFullscreen();
+        }
+      }
+    }
   }
 
   void _updateControllers() {
     // Clear existing if needed, or just update
     _controllers.forEach((key, controller) => controller.dispose());
     _controllers.clear();
-
+    
     currentProps.forEach((key, value) {
       if (value is String) {
         _controllers[key] = TextEditingController(text: value);
@@ -72,6 +105,32 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isFullScreen) {
+      return Scaffold(
+        backgroundColor: const Color(0xFFF0F9FF),
+        body: Stack(
+          children: [
+            _preview(),
+            Positioned(
+              top: 20,
+              right: 20,
+              child: Opacity(
+                opacity: 0.2, // Subtle so it doesn't distract
+                child: MouseRegion(
+                  onEnter: (_) => setState(() {}), // Trigger hover if needed
+                  child: IconButton(
+                    icon: const Icon(Icons.close_fullscreen, color: Color(0xFF1E1E4C), size: 30),
+                    onPressed: () => _toggleFullScreen(false),
+                    tooltip: "Exit Full Screen",
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Scaffold(
       body: Container(
         color: const Color(0xFFF0F9FF), // Modern subtle sky blue background
@@ -83,70 +142,64 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
                 builder: (context, constraints) {
                   final double totalWidth = constraints.maxWidth;
                   const double minPreviewWidth = 400.0;
-
+                  
                   return Row(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       // Sidebar
-                      SizedBox(width: _sidebarWidth, child: _sidebar()),
+                      if (!_isFullScreen)
+                        SizedBox(
+                          width: _sidebarWidth,
+                          child: _sidebar(),
+                        ),
                       // Resize Handle (Left)
-                      _verticalResizeHandle(
-                        isHovering: _isHoveringLeftHandle,
-                        onHoverChanged: (val) =>
-                            setState(() => _isHoveringLeftHandle = val),
-                        onDrag: (delta) {
-                          setState(() {
-                            double newWidth = (_sidebarWidth + delta).clamp(
-                              _minPanelWidth,
-                              _maxPanelWidth,
-                            );
-                            // Ensure preview doesn't shrink below 400
-                            if (totalWidth - newWidth - _propertiesWidth >=
-                                minPreviewWidth) {
-                              _sidebarWidth = newWidth;
-                            }
-                          });
-                        },
-                      ),
+                      if (!_isFullScreen)
+                        _verticalResizeHandle(
+                          isHovering: _isHoveringLeftHandle,
+                          onHoverChanged: (val) => setState(() => _isHoveringLeftHandle = val),
+                          onDrag: (delta) {
+                            setState(() {
+                              double newWidth = (_sidebarWidth + delta).clamp(_minPanelWidth, _maxPanelWidth);
+                              // Ensure preview doesn't shrink below 400
+                              if (totalWidth - newWidth - _propertiesWidth >= minPreviewWidth) {
+                                _sidebarWidth = newWidth;
+                              }
+                            });
+                          },
+                        ),
                       // Preview
                       Expanded(
                         child: Container(
                           decoration: BoxDecoration(
                             border: Border(
-                              left: BorderSide(
-                                color: Colors.black.withValues(alpha: 0.05),
-                                width: 1,
-                              ),
-                              right: BorderSide(
-                                color: Colors.black.withValues(alpha: 0.05),
-                                width: 1,
-                              ),
+                              left: BorderSide(color: Colors.black.withOpacity(0.05), width: _isFullScreen ? 0 : 1),
+                              right: BorderSide(color: Colors.black.withOpacity(0.05), width: _isFullScreen ? 0 : 1),
                             ),
                           ),
                           child: _preview(),
                         ),
                       ),
                       // Resize Handle (Right)
-                      _verticalResizeHandle(
-                        isHovering: _isHoveringRightHandle,
-                        onHoverChanged: (val) =>
-                            setState(() => _isHoveringRightHandle = val),
-                        onDrag: (delta) {
-                          setState(() {
-                            double newWidth = (_propertiesWidth - delta).clamp(
-                              _minPanelWidth,
-                              _maxPanelWidth,
-                            );
-                            // Ensure preview doesn't shrink below 400
-                            if (totalWidth - _sidebarWidth - newWidth >=
-                                minPreviewWidth) {
-                              _propertiesWidth = newWidth;
-                            }
-                          });
-                        },
-                      ),
+                      if (!_isFullScreen)
+                        _verticalResizeHandle(
+                          isHovering: _isHoveringRightHandle,
+                          onHoverChanged: (val) => setState(() => _isHoveringRightHandle = val),
+                          onDrag: (delta) {
+                            setState(() {
+                              double newWidth = (_propertiesWidth - delta).clamp(_minPanelWidth, _maxPanelWidth);
+                              // Ensure preview doesn't shrink below 400
+                              if (totalWidth - _sidebarWidth - newWidth >= minPreviewWidth) {
+                                _propertiesWidth = newWidth;
+                              }
+                            });
+                          },
+                        ),
                       // Properties
-                      SizedBox(width: _propertiesWidth, child: _properties()),
+                      if (!_isFullScreen)
+                        SizedBox(
+                          width: _propertiesWidth,
+                          child: _properties(),
+                        ),
                     ],
                   );
                 },
@@ -158,8 +211,8 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
     );
   }
 
-  // ================= UTILS & HELPERS =================
-
+  // ================= UTILS & HELPERS ================= (resizeable sidebar handle)
+  
   Widget _verticalResizeHandle({
     required bool isHovering,
     required ValueChanged<bool> onHoverChanged,
@@ -175,8 +228,8 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
           duration: const Duration(milliseconds: 200),
           width: isHovering ? 12 : 6,
           decoration: BoxDecoration(
-            color: isHovering
-                ? const Color(0xFF1E1E4C).withValues(alpha: 0.1)
+            color: isHovering 
+                ? const Color(0xFF1E1E4C).withOpacity(0.1) 
                 : Colors.transparent,
           ),
           child: Stack(
@@ -184,27 +237,24 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
             children: [
               // Visual Line
               Container(
-                width: 1,
-                color: isHovering
-                    ? const Color(0xFF1E1E4C).withValues(alpha: 0.3)
-                    : Colors.black.withValues(alpha: 0.05),
+                width: 2,
+                color: isHovering 
+                    ? const Color(0xFF1E1E4C).withOpacity(0.3) 
+                    : Colors.black.withOpacity(0.05),
               ),
               // Drag Icon (Dots)
               if (isHovering)
                 Column(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(
-                    3,
-                    (index) => Container(
-                      width: 3,
-                      height: 3,
-                      margin: const EdgeInsets.symmetric(vertical: 2),
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF1E1E4C),
-                        shape: BoxShape.circle,
-                      ),
+                  children: List.generate(3, (index) => Container(
+                    width: 3,
+                    height: 3,
+                    margin: const EdgeInsets.symmetric(vertical: 2),
+                    decoration: const BoxDecoration(
+                      color: Color.fromARGB(255, 30, 43, 76),
+                      shape: BoxShape.circle,
                     ),
-                  ),
+                  )),
                 ),
             ],
           ),
@@ -224,28 +274,24 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
       ),
       child: Row(
         children: [
-          Image.asset('assets/hdfc_logo.png', height: 36), // Scaled up slightly
+          Image.asset('assets/hdfc_logo.png', height: 36,), // Scaled up slightly
           const SizedBox(width: 40),
-          const VerticalDivider(
-            color: Colors.white24,
-            indent: 18,
-            endIndent: 18,
-          ),
+          const VerticalDivider(color: Colors.white24, indent: 18, endIndent: 18),
           const SizedBox(width: 40),
           RichText(
-            text: const TextSpan(
+            text: TextSpan(
               children: [
                 TextSpan(
                   text: "Design System Playground  ",
-                  style: TextStyle(
-                    color: Color(0xFF00FFC2),
-                    fontSize: 22, // Increased from 20
+                  style: const TextStyle(
+                    color: Color.fromARGB(255, 255, 255, 255),
+                    fontSize: 22,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 // TextSpan(
                 //   text: "NETBANKING - GLASS - ATOMIC",
-                //   style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontSize: 14),
+                //   style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 14),
                 // ),
               ],
             ),
@@ -259,26 +305,21 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
 
   Widget _sidebar() {
     return Container(
-      color: const Color.fromARGB(
-        255,
-        208,
-        236,
-        255,
-      ), // Deeper bluish tint for sidebar
+      color: const Color.fromARGB(255, 208, 236, 255), //color for sidebar
       child: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Padding(
-              padding: EdgeInsets.only(left: 8.0, bottom: 8.0),
+            Padding(
+              padding: const EdgeInsets.only(left: 8.0, bottom: 8.0),
               child: Text(
                 "COMPONENTS",
-                style: TextStyle(
+                style: const TextStyle(
                   color: Colors.black54,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.w700,
                   fontSize: 12,
-                  letterSpacing: 1.0,
+                  letterSpacing: 1.2,
                 ),
               ),
             ),
@@ -286,11 +327,11 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
             // Search Bar
             Container(
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: const Color.fromARGB(255, 255, 255, 255),
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
+                    color: Colors.black.withOpacity(0.05),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -305,16 +346,9 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
                 },
                 decoration: InputDecoration(
                   hintText: "Search components...",
-                  hintStyle: const TextStyle(
-                    color: Colors.black26,
-                    fontSize: 14,
-                  ),
-                  prefixIcon: const Icon(
-                    Icons.search,
-                    color: Color(0xFF1E1E4C),
-                    size: 20,
-                  ),
-                  suffixIcon: _searchQuery.isNotEmpty
+                  hintStyle: const TextStyle(color: Colors.black26, fontSize: 14),
+                  prefixIcon: const Icon(Icons.search, color: Color(0xFF1E1E4C), size: 20),
+                  suffixIcon: _searchQuery.isNotEmpty 
                       ? IconButton(
                           icon: const Icon(Icons.close, size: 18),
                           onPressed: () {
@@ -323,15 +357,15 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
                               _searchQuery = "";
                             });
                           },
-                        )
+                        ) 
                       : null,
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(vertical: 14),
                 ),
               ),
             ),
-
-            // Inline Search Suggestions
+            
+            // Inline or after Search Suggestions dialogue
             if (_searchQuery.isNotEmpty)
               Container(
                 margin: const EdgeInsets.only(top: 8),
@@ -340,7 +374,7 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.1),
+                      color: Colors.black.withOpacity(0.1),
                       blurRadius: 15,
                       offset: const Offset(0, 8),
                     ),
@@ -354,36 +388,32 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
                       shrinkWrap: true,
                       padding: EdgeInsets.zero,
                       children: componentRegistry
-                          .where(
-                            (c) => c.name.toLowerCase().contains(_searchQuery),
-                          )
-                          .map(
-                            (c) => ListTile(
-                              dense: true,
-                              title: Text(
-                                c.name,
-                                style: const TextStyle(
-                                  color: Color(0xFF1E1E4C),
-                                  fontWeight: FontWeight.w600,
+                          .where((c) => c.name.toLowerCase().contains(_searchQuery))
+                          .map((c) => ListTile(
+                                dense: true,
+                                title: Text(
+                                  c.name,
+                                  style: const TextStyle(
+                                    color: Color.fromARGB(255, 0, 33, 179),
+                                    fontWeight: FontWeight.w700,
+                                  ),
                                 ),
-                              ),
-                              subtitle: Text(
-                                c.category,
-                                style: const TextStyle(fontSize: 12),
-                              ),
-                              onTap: () {
-                                setState(() {
-                                  selectedComponent = c;
-                                  currentProps = Map.from(c.defaultProps);
-                                  _updateControllers();
-                                  _refreshCounter++;
-                                  _searchQuery = "";
-                                  _searchController.clear();
-                                  _expandedCategories[c.category] = true;
-                                });
-                              },
-                            ),
-                          )
+                                subtitle: Text(
+                                  c.category,
+                                  style: const TextStyle(fontSize: 11, color: Colors.black45),
+                                ),
+                                onTap: () {
+                                  setState(() {
+                                    selectedComponent = c;
+                                    currentProps = Map.from(c.defaultProps);
+                                    _updateControllers();
+                                    _refreshCounter++;
+                                    _searchQuery = "";
+                                    _searchController.clear();
+                                    _expandedCategories[c.category] = true;
+                                  });
+                                },
+                              ))
                           .toList(),
                     ),
                   ),
@@ -407,56 +437,42 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
 
   Widget _category(String category) {
     final items = componentRegistry
-        .where(
-          (c) =>
-              c.category == category &&
-              c.name.toLowerCase().contains(_searchQuery),
-        )
+        .where((c) => c.category == category && c.name.toLowerCase().contains(_searchQuery))
         .toList();
-
+    
     // Auto-expand if searching and there are matches
     final bool isSearching = _searchQuery.isNotEmpty;
-    final bool isExpanded = isSearching
-        ? items.isNotEmpty
-        : (_expandedCategories[category] ?? false);
+    final bool isExpanded = isSearching ? items.isNotEmpty : (_expandedCategories[category] ?? false);
 
     if (isSearching && items.isEmpty) return const SizedBox();
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: const Color.fromARGB(
-          255,
-          182,
-          205,
-          225,
-        ), // Distinct shade for categories
+        color: const Color.fromARGB(255, 182, 205, 225), // Distinct shade for categories
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           InkWell(
-            onTap: () =>
-                setState(() => _expandedCategories[category] = !isExpanded),
+            onTap: () => setState(() => _expandedCategories[category] = !isExpanded),
             borderRadius: BorderRadius.circular(16),
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    category,
-                    style: const TextStyle(
-                      color: Color(0xFF1A1A1A),
-                      fontWeight: FontWeight.bold,
-                      fontSize: 20,
+                    Text(
+                      category,
+                      style: const TextStyle(
+                        color: Color(0xFF1A1A1A),
+                        fontWeight: FontWeight.bold,
+                        fontSize: 20,
+                      ),
                     ),
-                  ),
                   Icon(
-                    isExpanded
-                        ? Icons.keyboard_arrow_up
-                        : Icons.keyboard_arrow_down,
+                    isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
                     color: Colors.black45,
                     size: 20,
                   ),
@@ -469,45 +485,31 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
             secondChild: Column(
               children: [
                 if (items.isEmpty && !isSearching)
-                  const Padding(
-                    padding: EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                     child: Text(
                       "No components",
-                      style: TextStyle(color: Colors.black38, fontSize: 12),
+                      style: const TextStyle(color: Colors.black38, fontSize: 12),
                     ),
                   )
                 else
                   ...items.map(
                     (c) => Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 2,
-                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                       child: ListTile(
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 0,
-                        ),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
                         dense: true,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                         title: Text(
                           c.name,
                           style: TextStyle(
-                            color: selectedComponent?.name == c.name
-                                ? const Color(0xFF1E1E4C)
-                                : Colors.black87,
-                            fontSize: 16,
-                            fontWeight: selectedComponent?.name == c.name
-                                ? FontWeight.w600
-                                : FontWeight.normal,
+                            color: selectedComponent?.name == c.name ? const Color.fromARGB(255, 0, 33, 179) : Colors.black87, //selected items in the sidebar
+                            fontSize: 14,
+                            fontWeight: selectedComponent?.name == c.name ? FontWeight.w600 : FontWeight.normal,
                           ),
                         ),
                         selected: selectedComponent?.name == c.name,
-                        selectedTileColor: const Color(
-                          0xFFBAE6FD,
-                        ), // Distinct blue for selected
+                        selectedTileColor: const Color(0xFFBAE6FD), // Distinct blue for selected
                         onTap: () {
                           setState(() {
                             selectedComponent = c;
@@ -522,9 +524,7 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
                 const SizedBox(height: 12),
               ],
             ),
-            crossFadeState: isExpanded
-                ? CrossFadeState.showSecond
-                : CrossFadeState.showFirst,
+            crossFadeState: isExpanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
             duration: const Duration(milliseconds: 250),
           ),
         ],
@@ -532,168 +532,115 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
     );
   }
 
-  // ================= PREVIEW =================
+  // ================= PREVIEW ================= (canvas)
 
   Widget _preview() {
     return Padding(
-      padding: const EdgeInsets.all(32),
+      padding: _isFullScreen ? EdgeInsets.zero : const EdgeInsets.all(32),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Component Name and Category
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    selectedComponent?.name ?? "Select Component",
-                    style: const TextStyle(
-                      color: Color(0xFF1E1E4C),
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                    ),
+          // Component Name and Category (Hidden in full screen)
+          if (!_isFullScreen)
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        selectedComponent?.name ?? "Select Component",
+                        style: const TextStyle(
+                          color: Color(0xFF1E1E4C),
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        selectedComponent?.category ?? "",
+                        style: const TextStyle(
+                          color: Colors.black45,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    selectedComponent?.category ?? "",
-                    style: const TextStyle(
-                      color: Colors.black45,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                    ),
+                ),
+                const Spacer(),
+                // Desktop/Mobile/Full Screen Toggle Row
+                Container(
+                  decoration: BoxDecoration(
+                    color: const Color.fromARGB(255, 178, 230, 254),
+                    borderRadius: BorderRadius.circular(16),
                   ),
-                ],
-              ),
-              const Spacer(),
-              // Desktop/Mobile Toggle in Styled Container
-              Container(
-                decoration: BoxDecoration(
-                  color: const Color.fromARGB(255, 178, 230, 254),
-                  borderRadius: BorderRadius.circular(16),
+                  padding: const EdgeInsets.all(6),
+                  child: Row(
+                    children: [
+                      _deviceIcon(Icons.desktop_windows, !_isFullScreen, () {
+                        _toggleFullScreen(false);
+                      }),
+                      _deviceIcon(Icons.fullscreen, _isFullScreen, () {
+                        _toggleFullScreen(true);
+                      }),
+                    ],
+                  ),
                 ),
-                padding: const EdgeInsets.all(6),
-                child: Row(
-                  children: [
-                    _deviceIcon(
-                      Icons.desktop_windows,
-                      !isMobile,
-                      () => setState(() => isMobile = false),
-                    ),
-                    _deviceIcon(
-                      Icons.phone_iphone,
-                      isMobile,
-                      () => setState(() => isMobile = true),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 32),
-          // Component Preview
+              ],
+            ),
+          if (!_isFullScreen) const SizedBox(height: 32),
           Expanded(
-            child: GlassContainer(
-              padding: EdgeInsets.zero,
-              opacity: 0.05,
-              borderRadius: BorderRadius.circular(24),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(24),
-                child: Center(
-                  child: selectedComponent == null
-                      ? const Text(
-                          "Select Component to Preview",
-                          style: TextStyle(color: Colors.black38),
-                        )
-                      : LayoutBuilder(
-                          builder: (context, constraints) {
-                            final isPage =
-                                selectedComponent?.category == 'Pages';
-                            final double targetWidth = isPage || !isMobile
-                                ? constraints.maxWidth
-                                : 375.0;
-                            final double targetHeight = isPage || !isMobile
-                                ? constraints.maxHeight
-                                : 812.0;
-
-                            return AnimatedContainer(
-                              duration: const Duration(milliseconds: 400),
-                              curve: Curves.easeInOutCubic,
-                              width: targetWidth,
-                              height: targetHeight,
-                              decoration: BoxDecoration(
-                                color: const Color.fromARGB(
-                                  255,
-                                  193,
-                                  230,
-                                  255,
-                                ), // Bluish tint for preview
-                                borderRadius: isMobile && !isPage
-                                    ? BorderRadius.circular(40)
-                                    : BorderRadius.circular(24),
-                                border: Border.all(
-                                  color: Colors.black.withValues(alpha: 0.05),
-                                  width: isMobile && !isPage ? 2 : 1,
+            child: selectedComponent == null
+                ? const Center(child: Text("Select Component to Preview"))
+                : _isFullScreen
+                    ? Container(
+                        color: const Color.fromARGB(255, 193, 230, 255),
+                        child: selectedComponent!.name == 'NetBankingLoginPage'
+                            ? selectedComponent!.builder(currentProps, isFullScreen: true)
+                            : Center(
+                                child: Transform.scale(
+                                  scale: _getComponentScale(),
+                                  child: selectedComponent!.builder(currentProps, isFullScreen: false),
                                 ),
                               ),
-                              child: ClipRRect(
-                                borderRadius: isMobile && !isPage
-                                    ? BorderRadius.circular(32)
-                                    : BorderRadius.circular(16),
-                                child: Center(
-                                  child: ConstrainedBox(
-                                    constraints: BoxConstraints(
-                                      maxWidth: targetWidth,
-                                      maxHeight: targetHeight,
+                      )
+                    : LayoutBuilder(
+                        builder: (context, constraints) {
+                          // Constant "Common Screen" size (7:5 aspect ratio)
+                          const double designWidth = 1400.0;
+                          const double designHeight = 1000.0;
+                          
+                          return Center(
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: const Color.fromARGB(255, 193, 230, 255),
+                                  borderRadius: BorderRadius.circular(12),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.1),
+                                      blurRadius: 30,
+                                      offset: const Offset(0, 15),
                                     ),
+                                  ],
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: SizedBox(
+                                    width: designWidth,
+                                    height: designHeight,
                                     child: Center(
-                                      child: FittedBox(
-                                        fit: BoxFit.contain,
-                                        child: ConstrainedBox(
-                                          constraints: BoxConstraints(
-                                            maxWidth: isMobile
-                                                ? targetWidth
-                                                : (selectedComponent
-                                                              ?.category ==
-                                                          'Pages'
-                                                      ? 1300
-                                                      : (selectedComponent
-                                                                    ?.category ==
-                                                                'Organisms'
-                                                            ? 800
-                                                            : 600)),
-                                            maxHeight: isMobile
-                                                ? targetHeight
-                                                : (selectedComponent
-                                                              ?.category ==
-                                                          'Pages'
-                                                      ? 800
-                                                      : (selectedComponent
-                                                                    ?.category ==
-                                                                'Organisms'
-                                                            ? 800
-                                                            : 500)),
-                                            minHeight: 0,
-                                          ),
-                                          child: Center(
-                                            child: Padding(
-                                              padding: isPage
-                                                  ? EdgeInsets.zero
-                                                  : (isMobile
-                                                        ? const EdgeInsets.symmetric(
-                                                            horizontal: 20,
-                                                            vertical: 40,
-                                                          )
-                                                        : const EdgeInsets.all(
-                                                            40,
-                                                          )),
-                                              child: Center(
-                                                key: ValueKey(_refreshCounter),
-                                                child: selectedComponent!
-                                                    .builder(currentProps),
-                                              ),
-                                            ),
+                                      key: ValueKey(_refreshCounter),
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(40), // Standard padding for components on the common screen
+                                        child: Center(
+                                          child: Transform.scale(
+                                            scale: _getComponentScale(),
+                                            child: selectedComponent!.builder(currentProps, isFullScreen: false),
                                           ),
                                         ),
                                       ),
@@ -701,16 +648,31 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
                                   ),
                                 ),
                               ),
-                            );
-                          },
-                        ),
-                ),
-              ),
-            ),
+                            ),
+                          );
+                        },
+                      ),
           ),
         ],
       ),
     );
+  }
+
+  double _getComponentScale() {
+    if (selectedComponent == null) return 1.0;
+    final name = selectedComponent!.name;
+    if (name == 'NetBankingLoginPage') return 1.0;
+
+    final lowerName = name.toLowerCase();
+    if (lowerName.contains('text') ||
+        lowerName.contains('checkbox') ||
+        lowerName.contains('toggle') ||
+        lowerName.contains('switch') ||
+        lowerName.contains('field')) {
+      return 1.5;
+    }
+
+    return 1.2;
   }
 
   Widget _deviceIcon(IconData icon, bool isActive, VoidCallback onPressed) {
@@ -719,9 +681,7 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
-          color: isActive
-              ? Colors.white.withValues(alpha: 0.3)
-              : Colors.transparent,
+          color: isActive ? Colors.white.withOpacity(0.3) : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Icon(
@@ -747,38 +707,28 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
+                Text(
                   "PROPERTIES",
-                  style: TextStyle(
-                    color: Colors.black, // Changed from black54
-                    fontWeight: FontWeight.bold, // More emphasis
+                  style: const TextStyle(
+                    color: Colors.black87,
+                    fontWeight: FontWeight.w900,
                     fontSize: 16,
-                    letterSpacing: 1.2,
+                    letterSpacing: 1.5,
                   ),
                 ),
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     IconButton(
-                      icon: const Icon(
-                        Icons.code_rounded,
-                        color: Colors.black,
-                        size: 22,
-                      ),
+                      icon: const Icon(Icons.code_rounded, color: Colors.black, size: 22),
                       onPressed: () => _showCodePreview(),
                       tooltip: "View Component Code",
                     ),
                     IconButton(
-                      icon: const Icon(
-                        Icons.refresh_rounded,
-                        color: Colors.black,
-                        size: 22,
-                      ),
+                      icon: const Icon(Icons.refresh_rounded, color: Colors.black, size: 22),
                       onPressed: () {
                         setState(() {
-                          currentProps = Map.from(
-                            selectedComponent!.defaultProps,
-                          );
+                          currentProps = Map.from(selectedComponent!.defaultProps);
                           _updateControllers();
                           _refreshCounter++;
                         });
@@ -787,66 +737,70 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
                     ),
                   ],
                 ),
-              ],
-            ),
-            const SizedBox(height: 16),
+            ],
+          ),
+          const SizedBox(height: 16),
+          
+          // Render all properties dynamically
+          ...currentProps.entries.map((entry) {
+            final key = entry.key;
+            final value = entry.value;
 
-            // Render all properties dynamically
-            ...currentProps.entries.map((entry) {
-              final key = entry.key;
-              final value = entry.value;
+            if (value is bool) {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: _propertyBoolInput(_capitalize(key), key),
+              );
+            } else if (value is double || value is int) {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: _propertyNumericInput(_capitalize(key), key),
+              );
+            } else if (value is Color) {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: _propertyColorInput(_capitalize(key), key),
+              );
+            } else if (value is String) {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: _propertyTextInput(_capitalize(key), key),
+              );
+            } else if (value is FontWeight) {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: _propertyFontWeightInput(_capitalize(key), key),
+              );
+            } else if (key.toLowerCase().contains("variant") || 
+                       key.toLowerCase().contains("size") || 
+                       key.toLowerCase().contains("style") ||
+                       key.toLowerCase().contains("align")) {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: _propertyEnumInput(_capitalize(key), key),
+              );
+            }
+            return const SizedBox();
+          }),
 
-              if (value is bool) {
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: _propertyBoolInput(_capitalize(key), key),
-                );
-              } else if (value is double || value is int) {
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: _propertyNumericInput(_capitalize(key), key),
-                );
-              } else if (value is Color) {
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: _propertyColorInput(_capitalize(key), key),
-                );
-              } else if (value is String) {
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: _propertyTextInput(_capitalize(key), key),
-                );
-              } else if (value is FontWeight) {
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: _propertyFontWeightInput(_capitalize(key), key),
-                );
-              }
-              return const SizedBox();
-            }),
-
-            const SizedBox(height: 16),
-            _propertyGroup(
-              title: "Component Info",
-              children: [
-                _infoRow("Name", selectedComponent?.name ?? ""),
-                _infoRow("Category", selectedComponent?.category ?? ""),
-                _infoRow("Props", currentProps.length.toString()),
-              ],
-            ),
-          ],
-        ),
+          const SizedBox(height: 16),
+          _propertyGroup(
+            title: "Component Info",
+            children: [
+              _infoRow("Name", selectedComponent?.name ?? ""),
+              _infoRow("Category", selectedComponent?.category ?? ""),
+              _infoRow("Props", currentProps.length.toString()),
+            ],
+          ),
+        ],
       ),
-    );
-  }
+    ),
+  );
+}
 
-  String _capitalize(String s) =>
-      s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
+  String _capitalize(String s) => s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
 
-  Widget _propertyGroup({
-    required String title,
-    required List<Widget> children,
-  }) {
+  Widget _propertyGroup({required String title, required List<Widget> children}) {
     return GlassContainer(
       padding: const EdgeInsets.all(16),
       opacity: 0.05,
@@ -856,11 +810,7 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
         children: [
           Text(
             title,
-            style: const TextStyle(
-              color: Colors.black,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ), // Changed from white70
+            style: const TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 16),
           ...children,
@@ -873,10 +823,7 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
     return SwitchListTile(
       dense: true,
       contentPadding: EdgeInsets.zero,
-      title: Text(
-        label,
-        style: const TextStyle(color: Colors.black, fontSize: 18),
-      ), // Changed from black87
+      title: Text(label, style: const TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600)),
       value: currentProps[key] ?? false,
       onChanged: (val) => setState(() => currentProps[key] = val),
       activeThumbColor: const Color(0xFF1E1E4C),
@@ -886,17 +833,17 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
   Widget _propertyTextInput(String label, String key) {
     bool disabled = currentProps["disabled"] ?? false;
     final controller = _controllers[key];
-
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(color: Colors.black, fontSize: 12)),
+        Text(label, style: const TextStyle(color: Colors.black, fontSize: 12, fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
         TextField(
           enabled: !disabled,
           style: TextStyle(
             color: disabled ? Colors.black26 : Colors.black87,
-            fontSize: 18,
+            fontSize: 16,
           ),
           controller: controller,
           onChanged: (val) => setState(() => currentProps[key] = val),
@@ -910,12 +857,12 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
     bool disabled = currentProps["disabled"] ?? false;
     final value = (currentProps[key] ?? 0.0).toDouble();
     final controller = _controllers[key];
-
+    
     // Determine bounds and properties based on key name
     double min = 0;
     double max = 1000;
     int decimals = 0;
-
+    
     final lowerKey = key.toLowerCase();
     if (lowerKey.contains("opacity")) {
       max = 1.0;
@@ -931,8 +878,7 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
     } else if (lowerKey.contains("width") || lowerKey.contains("height")) {
       max = 1200.0;
       // Atoms usually don't need 1200px height, 400px is plenty and prevents UI breakage
-      if (lowerKey.contains("height") &&
-          selectedComponent?.category == 'Atoms') {
+      if (lowerKey.contains("height") && selectedComponent?.category == 'Atoms') {
         max = 400.0;
       }
     } else if (lowerKey.contains("length")) {
@@ -954,13 +900,7 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Expanded(
-              child: Text(
-                label,
-                style: const TextStyle(color: Colors.black, fontSize: 15),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
+            Expanded(child: Text(label, style: const TextStyle(color: Colors.black, fontSize: 14, fontWeight: FontWeight.w600), overflow: TextOverflow.ellipsis)),
             SizedBox(
               width: 60,
               height: 24,
@@ -968,11 +908,7 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
                 enabled: !disabled,
                 controller: controller,
                 textAlign: TextAlign.right,
-                style: const TextStyle(
-                  color: Colors.black,
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: const TextStyle(color: Colors.black, fontSize: 14, fontWeight: FontWeight.bold),
                 decoration: const InputDecoration(
                   isDense: true,
                   border: InputBorder.none,
@@ -1000,18 +936,14 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
             value: value.clamp(min, max),
             min: min,
             max: max,
-            onChanged: disabled
-                ? null
-                : (val) {
-                    setState(() {
-                      currentProps[key] = val;
-                      if (controller != null) {
-                        controller.text = decimals > 0
-                            ? val.toStringAsFixed(decimals)
-                            : val.toInt().toString();
-                      }
-                    });
-                  },
+            onChanged: disabled ? null : (val) {
+              setState(() {
+                currentProps[key] = val;
+                if (controller != null) {
+                  controller.text = decimals > 0 ? val.toStringAsFixed(decimals) : val.toInt().toString();
+                }
+              });
+            },
             activeColor: const Color(0xFF1E1E4C),
             inactiveColor: Colors.black12,
           ),
@@ -1022,31 +954,17 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
 
   Widget _propertyColorInput(String label, String key) {
     final Color currentColor = currentProps[key] ?? Colors.white;
-
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Expanded(
-              child: Text(
-                label,
-                style: const TextStyle(
-                  color: Colors.black,
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
-                ),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
+            Expanded(child: Text(label, style: const TextStyle(color: Colors.black, fontSize: 13, fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis)),
             Text(
-              '#${currentColor.toARGB32().toRadixString(16).substring(2).toUpperCase()}',
-              style: const TextStyle(
-                color: Colors.black54,
-                fontSize: 12,
-                fontFamily: 'monospace',
-              ),
+              '#${currentColor.value.toRadixString(16).substring(2).toUpperCase()}',
+              style: const TextStyle(color: Colors.black54, fontSize: 12, fontWeight: FontWeight.w500),
             ),
           ],
         ),
@@ -1069,21 +987,8 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Expanded(
-            child: Text(
-              label,
-              style: const TextStyle(color: Colors.black, fontSize: 15),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          Text(
-            value,
-            style: const TextStyle(
-              color: Colors.black,
-              fontSize: 15,
-              fontWeight: FontWeight.bold,
-            ),
-          ), // Changed from black87
+          Expanded(child: Text(label, style: const TextStyle(color: Colors.black, fontSize: 14))),
+          Text(value, style: const TextStyle(color: Colors.black, fontSize: 14, fontWeight: FontWeight.bold)),
         ],
       ),
     );
@@ -1106,65 +1011,6 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
     );
   }
 
-  Widget _propertyFontWeightInput(String label, String key) {
-    final FontWeight currentWeight = currentProps[key] ?? FontWeight.normal;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: const TextStyle(color: Colors.black, fontSize: 15)),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            _weightOption(
-              "Normal",
-              FontWeight.normal,
-              currentWeight == FontWeight.normal,
-              key,
-            ),
-            const SizedBox(width: 8),
-            _weightOption(
-              "Bold",
-              FontWeight.bold,
-              currentWeight == FontWeight.bold,
-              key,
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _weightOption(
-    String label,
-    FontWeight weight,
-    bool isSelected,
-    String key,
-  ) {
-    return Expanded(
-      child: InkWell(
-        onTap: () => setState(() => currentProps[key] = weight),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          decoration: BoxDecoration(
-            color: isSelected ? const Color(0xFF1E1E4C) : Colors.white,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(
-              color: isSelected ? const Color(0xFF1E1E4C) : Colors.black12,
-            ),
-          ),
-          child: Center(
-            child: Text(
-              label,
-              style: TextStyle(
-                color: isSelected ? Colors.white : Colors.black87,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 
   void _showCodePreview() {
     if (selectedComponent == null) return;
@@ -1182,10 +1028,7 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
             const SizedBox(width: 12),
             Text(
               "${selectedComponent!.name} Code",
-              style: const TextStyle(
-                color: Color(0xFF1E1E4C),
-                fontWeight: FontWeight.bold,
-              ),
+              style: const TextStyle(color: Color(0xFF1E1E4C), fontWeight: FontWeight.bold, fontSize: 20),
             ),
           ],
         ),
@@ -1195,10 +1038,10 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
+            border: Border.all(color: Colors.black.withOpacity(0.05)),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.02),
+                color: Colors.black.withOpacity(0.02),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -1209,13 +1052,9 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   "Copy and use this code in your Flutter app:",
-                  style: TextStyle(
-                    color: Colors.black54,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                  ),
+                  style: const TextStyle(color: Colors.black54, fontSize: 13, fontWeight: FontWeight.w500),
                 ),
                 const SizedBox(height: 16),
                 Container(
@@ -1227,10 +1066,10 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
                   child: SelectableText(
                     code,
                     style: const TextStyle(
-                      fontFamily: 'monospace',
                       fontSize: 14,
                       color: Color(0xFF1E1E4C),
                       height: 1.5,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                 ),
@@ -1241,16 +1080,11 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text(
-              "Close",
-              style: TextStyle(
-                color: Colors.black54,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+            child: const Text("Close", style: TextStyle(color: Colors.black54, fontWeight: FontWeight.bold)),
           ),
           ElevatedButton.icon(
             onPressed: () {
+              Clipboard.setData(ClipboardData(text: code));
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text("Code copied to clipboard!"),
@@ -1266,9 +1100,7 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
               backgroundColor: const Color(0xFF1E1E4C),
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
           ),
         ],
@@ -1279,21 +1111,18 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
   String _generateCodeString() {
     final name = selectedComponent!.name;
     final buffer = StringBuffer();
-
+    
     // Class name formatting
     String className = name.replaceAll(' ', '');
-
+    
     buffer.writeln('$className(');
-
+    
     currentProps.forEach((key, value) {
       buffer.write('  $key: ');
       if (value is String) {
         buffer.writeln("'$value',");
       } else if (value is Color) {
-        String colorHex = value.toARGB32()
-            .toRadixString(16)
-            .toUpperCase()
-            .padLeft(8, '0');
+        String colorHex = value.value.toRadixString(16).toUpperCase().padLeft(8, '0');
         buffer.writeln('Color(0x$colorHex),');
       } else if (value is FontWeight) {
         buffer.writeln('$value,');
@@ -1303,9 +1132,119 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
         buffer.writeln('$value,');
       }
     });
-
+    
     buffer.write(')');
     return buffer.toString();
+  }
+
+  Widget _propertyEnumInput(String label, String key) {
+    List<String> options = selectedComponent?.options?[key] ?? [];
+    
+    if (options.isEmpty) {
+      final lowerKey = key.toLowerCase();
+      if (lowerKey.contains("variant")) {
+        options = ["Default", "H1", "H2", "Body"];
+      } else if (lowerKey.contains("size")) {
+        options = ["Small", "Medium", "Large"];
+      } else if (lowerKey.contains("style")) {
+        options = ["Glass", "Primary"];
+      } else if (lowerKey.contains("align")) {
+        options = ["left", "center", "right"];
+      }
+    }
+    
+    if (options.isEmpty) return const SizedBox();
+
+    final String currentValue = currentProps[key]?.toString() ?? options.first;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: const TextStyle(color: Colors.black, fontSize: 13, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.black12),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: options.contains(currentValue) ? currentValue : options.first,
+              isExpanded: true,
+              icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.black54, size: 20),
+              style: const TextStyle(color: Colors.black, fontSize: 14),
+              items: options.map((String value) {
+                return DropdownMenuItem<String>(
+                  value: value,
+                  child: Text(value, style: const TextStyle()),
+                );
+              }).toList(),
+              onChanged: (val) {
+                if (val != null) {
+                  setState(() {
+                    currentProps[key] = val;
+                  });
+                }
+              },
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _propertyFontWeightInput(String label, String key) {
+    final FontWeight currentWeight = currentProps[key] ?? FontWeight.normal;
+    final List<FontWeight> weights = [
+      FontWeight.w100, FontWeight.w200, FontWeight.w300, FontWeight.w400,
+      FontWeight.w500, FontWeight.w600, FontWeight.w700, FontWeight.w800, FontWeight.w900,
+    ];
+    
+    String weightName(FontWeight w) {
+      if (w == FontWeight.w100) return "Thin (100)";
+      if (w == FontWeight.w200) return "ExtraLight (200)";
+      if (w == FontWeight.w300) return "Light (300)";
+      if (w == FontWeight.w400) return "Regular (400)";
+      if (w == FontWeight.w500) return "Medium (500)";
+      if (w == FontWeight.w600) return "SemiBold (600)";
+      if (w == FontWeight.w700) return "Bold (700)";
+      if (w == FontWeight.w800) return "ExtraBold (800)";
+      if (w == FontWeight.w900) return "Black (900)";
+      return "Weight";
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: const TextStyle(color: Colors.black, fontSize: 13, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.black12),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<FontWeight>(
+              value: currentWeight,
+              isExpanded: true,
+              icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.black54, size: 20),
+              style: const TextStyle(color: Colors.black, fontSize: 14),
+              items: weights.map((w) => DropdownMenuItem(
+                value: w,
+                child: Text(weightName(w), style: const TextStyle()),
+              )).toList(),
+              onChanged: (val) {
+                if (val != null) setState(() => currentProps[key] = val);
+              },
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }
 
@@ -1357,13 +1296,11 @@ class _AdvancedColorPickerState extends State<_AdvancedColorPicker> {
           builder: (context, constraints) {
             final width = constraints.maxWidth;
             const height = 150.0;
-
+            
             return GestureDetector(
               onPanUpdate: (details) {
                 final RenderBox box = context.findRenderObject() as RenderBox;
-                final Offset localOffset = box.globalToLocal(
-                  details.globalPosition,
-                );
+                final Offset localOffset = box.globalToLocal(details.globalPosition);
                 setState(() {
                   s = (localOffset.dx / width).clamp(0.0, 1.0);
                   v = (1.0 - (localOffset.dy / height)).clamp(0.0, 1.0);
@@ -1406,9 +1343,7 @@ class _AdvancedColorPickerState extends State<_AdvancedColorPicker> {
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               border: Border.all(color: Colors.white, width: 2),
-                              boxShadow: const [
-                                BoxShadow(blurRadius: 4, color: Colors.black26),
-                              ],
+                              boxShadow: const [BoxShadow(blurRadius: 4, color: Colors.black26)],
                             ),
                           ),
                         ),
@@ -1444,10 +1379,7 @@ class _AdvancedColorPickerState extends State<_AdvancedColorPicker> {
               trackHeight: 12,
               activeTrackColor: Colors.transparent,
               inactiveTrackColor: Colors.transparent,
-              thumbShape: const RoundSliderThumbShape(
-                enabledThumbRadius: 8,
-                elevation: 2,
-              ),
+              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8, elevation: 2),
               overlayShape: const RoundSliderOverlayShape(overlayRadius: 0),
             ),
             child: Slider(
@@ -1473,44 +1405,27 @@ class _AdvancedColorPickerState extends State<_AdvancedColorPicker> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    "HEX",
-                    style: TextStyle(fontSize: 10, color: Colors.black54),
-                  ),
+                  const Text("HEX", style: TextStyle(fontSize: 10, color: Colors.black54)),
                   const SizedBox(height: 4),
                   TextField(
-                    key: ValueKey('hex_${widget.color.toARGB32()}'),
+                    key: ValueKey('hex_${widget.color.value}'),
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      fontFamily: 'monospace',
-                    ),
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
                     controller: TextEditingController(
-                      text: widget.color.toARGB32()
-                          .toRadixString(16)
-                          .substring(2)
-                          .toUpperCase(),
+                      text: widget.color.value.toRadixString(16).substring(2).toUpperCase(),
                     ),
                     decoration: InputDecoration(
                       isDense: true,
                       prefixText: '#',
-                      contentPadding: const EdgeInsets.symmetric(
-                        vertical: 8,
-                        horizontal: 8,
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(6),
-                      ),
+                      contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
                     ),
                     onSubmitted: (val) {
                       String hex = val.replaceFirst('#', '');
                       if (hex.length == 6) {
                         final parsed = int.tryParse(hex, radix: 16);
                         if (parsed != null) {
-                          widget.onChanged(
-                            Color(parsed).withValues(alpha: 1.0),
-                          );
+                          widget.onChanged(Color(parsed).withOpacity(1.0));
                         }
                       }
                     },
@@ -1524,15 +1439,15 @@ class _AdvancedColorPickerState extends State<_AdvancedColorPicker> {
               flex: 3,
               child: Row(
                 children: [
-                  _colorComponentInput("R", (widget.color.r * 255.0).round().clamp(0, 255), (val) {
+                  _colorComponentInput("R", widget.color.red, (val) {
                     widget.onChanged(widget.color.withRed(val));
                   }),
                   const SizedBox(width: 6),
-                  _colorComponentInput("G", (widget.color.g * 255.0).round().clamp(0, 255), (val) {
+                  _colorComponentInput("G", widget.color.green, (val) {
                     widget.onChanged(widget.color.withGreen(val));
                   }),
                   const SizedBox(width: 6),
-                  _colorComponentInput("B", (widget.color.b * 255.0).round().clamp(0, 255), (val) {
+                  _colorComponentInput("B", widget.color.blue, (val) {
                     widget.onChanged(widget.color.withBlue(val));
                   }),
                 ],
@@ -1544,18 +1459,11 @@ class _AdvancedColorPickerState extends State<_AdvancedColorPicker> {
     );
   }
 
-  Widget _colorComponentInput(
-    String label,
-    int value,
-    ValueChanged<int> onChanged,
-  ) {
+  Widget _colorComponentInput(String label, int value, ValueChanged<int> onChanged) {
     return Expanded(
       child: Column(
         children: [
-          Text(
-            label,
-            style: const TextStyle(fontSize: 10, color: Colors.black54),
-          ),
+          Text(label, style: const TextStyle(fontSize: 10, color: Colors.black54)),
           const SizedBox(height: 4),
           TextField(
             keyboardType: TextInputType.number,
@@ -1566,9 +1474,7 @@ class _AdvancedColorPickerState extends State<_AdvancedColorPicker> {
             decoration: InputDecoration(
               isDense: true,
               contentPadding: const EdgeInsets.symmetric(vertical: 8),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(6),
-              ),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
             ),
             onSubmitted: (val) {
               final parsed = int.tryParse(val);
@@ -1582,3 +1488,6 @@ class _AdvancedColorPickerState extends State<_AdvancedColorPicker> {
     );
   }
 }
+
+
+
