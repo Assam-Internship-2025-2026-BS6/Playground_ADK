@@ -181,7 +181,6 @@ final List<ComponentMetadata> componentRegistry = [
       ],
       'width': 300.0,
       'activeColor': const Color(0xFF1E1E4C),
-      'size': 1.0,
       'xOffset': 0.0,
       'yOffset': 0.0,
     },
@@ -194,7 +193,6 @@ final List<ComponentMetadata> componentRegistry = [
             items: List<String>.from(props['items'] ?? []),
             width: (props['width'] as num?)?.toDouble() ?? 300.0,
             activeColor: props['activeColor'] ?? const Color(0xFF1E1E4C),
-            size: (props['size'] as num?)?.toDouble() ?? 1.0,
             offset: Offset(
               (props['xOffset'] as num?)?.toDouble() ?? 0.0,
               (props['yOffset'] as num?)?.toDouble() ?? 0.0,
@@ -225,8 +223,8 @@ final List<ComponentMetadata> componentRegistry = [
     },
     builder: (Map<String, dynamic> props, {bool isFullScreen = false}) {
       return GlassCard(
-        width: (props['width'] as num?)?.toDouble(),
-        height: (props['height'] as num?)?.toDouble(),
+        width: (props['width'] as num?)?.toDouble() ?? 550.0,
+        height: (props['height'] as num?)?.toDouble() ?? 300.0,
         blur: (props['blur'] as num?)?.toDouble() ?? 15.0,
         opacity: (props['opacity'] as num?)?.toDouble() ?? 0.12,
         showShadow: props['showShadow'] ?? true,
@@ -259,7 +257,7 @@ final List<ComponentMetadata> componentRegistry = [
 
       return dk.Text(
         text: props['text'] ?? 'Hello World',
-        fontSize: (props['fontSize'] as num?)?.toDouble(),
+        fontSize: (props['fontSize'] as num?)?.toDouble() ?? 20.0,
         color: props['color'],
         fontWeight: props['fontWeight'],
         textAlign: align,
@@ -281,7 +279,7 @@ final List<ComponentMetadata> componentRegistry = [
         hintText: props['hintText'] ?? 'Enter text',
         isPassword: props['isPassword'] ?? false,
         height: (props['height'] as num?)?.toDouble() ?? 60.0,
-        width: (props['width'] as num?)?.toDouble(),
+        width: (props['width'] as num?)?.toDouble() ?? 700.0,
         showErrorText: props['showErrorText'] ?? false,
       );
     },
@@ -298,26 +296,19 @@ final List<ComponentMetadata> componentRegistry = [
       'showOutline': true,
       'blur': 10.0,
       'opacity': 0.8,
-      'style': 'Glass',
-      'isLoading': false,
     },
     builder: (Map<String, dynamic> props, {bool isFullScreen = false}) {
       return Button(
         text: props['text'] ?? 'Know More',
-        width: (props['width'] as num?)?.toDouble(),
-        height: (props['height'] as num?)?.toDouble(),
+        width: (props['width'] as num?)?.toDouble() ?? 321.0,
+        height: (props['height'] as num?)?.toDouble() ?? 61.0,
         disabled: props['disabled'] ?? false,
         color: props['color'] ?? const Color(0xFF5371F9),
         showOutline: props['showOutline'] ?? true,
         blur: (props['blur'] as num?)?.toDouble() ?? 10.0,
         opacity: (props['opacity'] as num?)?.toDouble() ?? 0.8,
-        style: props['style'] ?? 'Glass',
-        isLoading: props['isLoading'] ?? false,
         onTap: () => debugPrint('Button Pressed'),
       );
-    },
-    options: {
-      'style': ['Glass', 'Primary'],
     },
   ),
   ComponentMetadata(
@@ -328,7 +319,6 @@ final List<ComponentMetadata> componentRegistry = [
       'disabled': false,
       'activeColor': const Color(0xFF1E1E4C),
       'labelColor': const Color(0xFF1E1E4C),
-      'size': 1.0,
       'xOffset': 0.0,
       'yOffset': 0.0,
     },
@@ -339,7 +329,6 @@ final List<ComponentMetadata> componentRegistry = [
         disabled: props['disabled'] ?? false,
         activeColor: props['activeColor'] ?? const Color(0xFF1E1E4C),
         labelColor: props['labelColor'] ?? const Color(0xFF1E1E4C),
-        size: (props['size'] as num?)?.toDouble() ?? 1.0,
         offset: Offset(
           (props['xOffset'] as num?)?.toDouble() ?? 0.0,
           (props['yOffset'] as num?)?.toDouble() ?? 0.0,
@@ -391,7 +380,6 @@ final List<ComponentMetadata> componentRegistry = [
       'fontSize': 18.0,
       'activeColor': const Color(0xFF1E1E4C),
       'labelColor': Colors.black87,
-      'size': 1.0,
       'xOffset': 0.0,
       'yOffset': 0.0,
     },
@@ -404,7 +392,6 @@ final List<ComponentMetadata> componentRegistry = [
             fontSize: (props['fontSize'] as num?)?.toDouble() ?? 18.0,
             activeColor: props['activeColor'] ?? const Color(0xFF1E1E4C),
             labelColor: props['labelColor'] ?? Colors.black87,
-            size: (props['size'] as num?)?.toDouble() ?? 1.0,
             offset: Offset(
               (props['xOffset'] as num?)?.toDouble() ?? 0.0,
               (props['yOffset'] as num?)?.toDouble() ?? 0.0,
@@ -428,7 +415,6 @@ final List<ComponentMetadata> componentRegistry = [
       'value': false,
       'activeColor': const Color(0xFF1E1E4C),
       'labelColor': Colors.black87,
-      'size': 1.0,
       'xOffset': 0.0,
       'yOffset': 0.0,
     },
@@ -440,7 +426,6 @@ final List<ComponentMetadata> componentRegistry = [
             value: props['value'] ?? false,
             activeColor: props['activeColor'] ?? const Color(0xFF1E1E4C),
             labelColor: props['labelColor'] ?? Colors.black87,
-            size: (props['size'] as num?)?.toDouble() ?? 1.0,
             offset: Offset(
               (props['xOffset'] as num?)?.toDouble() ?? 0.0,
               (props['yOffset'] as num?)?.toDouble() ?? 0.0,

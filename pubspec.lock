@@ -52,9 +52,11 @@ packages:
   designkit:
     dependency: "direct main"
     description:
-      path: "../designkit_hdfc_web/designkit"
-      relative: true
-    source: path
+      path: designkit
+      ref: develop
+      resolved-ref: c05513563be7b7115079dc8d546ca51cb08c24e7
+      url: "https://github.com/Assam-Internship-2025-2026-BS6/Flutter-DesignKit-.git"
+    source: git
     version: "1.0.0+1"
   fake_async:
     dependency: transitive
