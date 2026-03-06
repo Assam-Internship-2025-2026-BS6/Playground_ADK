@@ -3,19 +3,22 @@ FROM ubuntu:22.04 as build
 
 RUN apt update && apt install -y curl git unzip xz-utils zip libglu1-mesa
 
-# Install Flutter
 RUN git clone https://github.com/flutter/flutter.git /flutter
+
 ENV PATH="/flutter/bin:/flutter/bin/cache/dart-sdk/bin:${PATH}"
 
 WORKDIR /app
 
-# Copy playground project
 COPY . .
 
 RUN flutter pub get
 RUN flutter build web --release
 
+
 # Stage 2: Serve using Nginx
-FROM nginx:alpine
+FROM nginx:1.27-alpine
+
 COPY --from=build /app/build/web /usr/share/nginx/html
-EXPOSE 80 
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+EXPOSE 80

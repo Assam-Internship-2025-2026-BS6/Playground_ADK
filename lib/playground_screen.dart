@@ -610,8 +610,8 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
                     : LayoutBuilder(
                         builder: (context, constraints) {
                           // Constant "Common Screen" size (7:5 aspect ratio)
-                          const double designWidth = 1400.0;
-                          const double designHeight = 1000.0;
+                          const double designWidth = 1440.0;
+                          const double designHeight = 900.0;
                           
                           return Center(
                             child: FittedBox(
@@ -636,7 +636,7 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
                                     child: Center(
                                       key: ValueKey(_refreshCounter),
                                       child: Padding(
-                                        padding: const EdgeInsets.all(40), // Standard padding for components on the common screen
+                                        padding: const EdgeInsets.all(20), // Standard padding for components on the common screen
                                         child: Center(
                                           child: Transform.scale(
                                             scale: _getComponentScale(),

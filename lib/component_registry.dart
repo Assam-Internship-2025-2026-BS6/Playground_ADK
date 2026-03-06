@@ -23,18 +23,10 @@ final List<ComponentMetadata> componentRegistry = [
   ComponentMetadata(
     name: 'NetBankingLoginPage',
     category: 'Pages',
-    defaultProps: {
-      'width': 1400.0,
-      'height': 1000.0,
-    },
+    defaultProps: {},
     builder: (Map<String, dynamic> props, {bool isFullScreen = false}) {
       return NetBankingLoginPage(
-        width: isFullScreen
-            ? double.infinity
-            : ((props['width'] as num?)?.toDouble() ?? 1000.0),
-        height: isFullScreen
-            ? double.infinity
-            : ((props['height'] as num?)?.toDouble() ?? 950.0),
+        isFullScreen: isFullScreen,
       );
     },
   ),
