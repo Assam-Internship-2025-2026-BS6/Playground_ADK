@@ -7,6 +7,7 @@ import 'dart:html' as html;
 import 'component_registry.dart';
 import 'component_metadata.dart';
 import 'package:designkit/components/atoms/glass_container.dart';
+import 'generated_sources.dart';
 
 class PlaygroundScreen extends StatefulWidget {
   const PlaygroundScreen({super.key});
@@ -24,22 +25,23 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
   int _refreshCounter = 0;
   String _searchQuery = "";
   late TextEditingController _searchController;
-  
+
   double _sidebarWidth = 320.0;
   double _propertiesWidth = 320.0;
   final double _minPanelWidth = 300.0;
   final double _maxPanelWidth = 800.0;
-  
+
   bool _isHoveringLeftHandle = false;
   bool _isHoveringRightHandle = false;
-  
+
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
   // Track expansion state for categories
   final Map<String, bool> _expandedCategories = {
     "Atoms": false,
     "Molecules": false,
     "Organisms": false,
     "Pages": false,
-    "Assets": false,
   };
 
   @override
@@ -84,7 +86,7 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
     // Clear existing if needed, or just update
     _controllers.forEach((key, controller) => controller.dispose());
     _controllers.clear();
-    
+
     currentProps.forEach((key, value) {
       if (value is String) {
         _controllers[key] = TextEditingController(text: value);
@@ -103,6 +105,76 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
     super.dispose();
   }
 
+  Widget _buildDesktopLayout(double totalWidth) {
+    const double minPreviewWidth = 400.0;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Sidebar
+        if (!_isFullScreen)
+          SizedBox(
+            width: _sidebarWidth,
+            child: _sidebar(),
+          ),
+        // Resize Handle (Left)
+        if (!_isFullScreen)
+          _verticalResizeHandle(
+            isHovering: _isHoveringLeftHandle,
+            onHoverChanged: (val) =>
+                setState(() => _isHoveringLeftHandle = val),
+            onDrag: (delta) {
+              setState(() {
+                double newWidth = (_sidebarWidth + delta)
+                    .clamp(_minPanelWidth, _maxPanelWidth);
+                if (totalWidth - newWidth - _propertiesWidth >=
+                    minPreviewWidth) {
+                  _sidebarWidth = newWidth;
+                }
+              });
+            },
+          ),
+        // Preview
+        Expanded(
+          child: Container(
+            decoration: BoxDecoration(
+              border: Border(
+                left: BorderSide(
+                    color: Colors.black.withOpacity(0.05),
+                    width: _isFullScreen ? 0 : 1),
+                right: BorderSide(
+                    color: Colors.black.withOpacity(0.05),
+                    width: _isFullScreen ? 0 : 1),
+              ),
+            ),
+            child: _preview(),
+          ),
+        ),
+        // Resize Handle (Right)
+        if (!_isFullScreen)
+          _verticalResizeHandle(
+            isHovering: _isHoveringRightHandle,
+            onHoverChanged: (val) =>
+                setState(() => _isHoveringRightHandle = val),
+            onDrag: (delta) {
+              setState(() {
+                double newWidth = (_propertiesWidth - delta)
+                    .clamp(_minPanelWidth, _maxPanelWidth);
+                if (totalWidth - _sidebarWidth - newWidth >= minPreviewWidth) {
+                  _propertiesWidth = newWidth;
+                }
+              });
+            },
+          ),
+        // Properties
+        if (!_isFullScreen)
+          SizedBox(
+            width: _propertiesWidth,
+            child: _properties(),
+          ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isFullScreen) {
@@ -119,7 +191,8 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
                 child: MouseRegion(
                   onEnter: (_) => setState(() {}), // Trigger hover if needed
                   child: IconButton(
-                    icon: const Icon(Icons.close_fullscreen, color: Color(0xFF1E1E4C), size: 30),
+                    icon: const Icon(Icons.close_fullscreen,
+                        color: Color(0xFF1E1E4C), size: 30),
                     onPressed: () => _toggleFullScreen(false),
                     tooltip: "Exit Full Screen",
                   ),
@@ -131,88 +204,71 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
       );
     }
 
-    return Scaffold(
-      body: Container(
-        color: const Color(0xFFF0F9FF), // Modern subtle sky blue background
-        child: Column(
-          children: [
-            _header(),
-            Expanded(
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final double totalWidth = constraints.maxWidth;
-                  const double minPreviewWidth = 400.0;
-                  
-                  return Row(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      // Sidebar
-                      if (!_isFullScreen)
-                        SizedBox(
-                          width: _sidebarWidth,
-                          child: _sidebar(),
-                        ),
-                      // Resize Handle (Left)
-                      if (!_isFullScreen)
-                        _verticalResizeHandle(
-                          isHovering: _isHoveringLeftHandle,
-                          onHoverChanged: (val) => setState(() => _isHoveringLeftHandle = val),
-                          onDrag: (delta) {
-                            setState(() {
-                              double newWidth = (_sidebarWidth + delta).clamp(_minPanelWidth, _maxPanelWidth);
-                              // Ensure preview doesn't shrink below 400
-                              if (totalWidth - newWidth - _propertiesWidth >= minPreviewWidth) {
-                                _sidebarWidth = newWidth;
-                              }
-                            });
-                          },
-                        ),
-                      // Preview
-                      Expanded(
-                        child: Container(
-                          decoration: BoxDecoration(
-                            border: Border(
-                              left: BorderSide(color: Colors.black.withOpacity(0.05), width: _isFullScreen ? 0 : 1),
-                              right: BorderSide(color: Colors.black.withOpacity(0.05), width: _isFullScreen ? 0 : 1),
-                            ),
-                          ),
-                          child: _preview(),
-                        ),
-                      ),
-                      // Resize Handle (Right)
-                      if (!_isFullScreen)
-                        _verticalResizeHandle(
-                          isHovering: _isHoveringRightHandle,
-                          onHoverChanged: (val) => setState(() => _isHoveringRightHandle = val),
-                          onDrag: (delta) {
-                            setState(() {
-                              double newWidth = (_propertiesWidth - delta).clamp(_minPanelWidth, _maxPanelWidth);
-                              // Ensure preview doesn't shrink below 400
-                              if (totalWidth - _sidebarWidth - newWidth >= minPreviewWidth) {
-                                _propertiesWidth = newWidth;
-                              }
-                            });
-                          },
-                        ),
-                      // Properties
-                      if (!_isFullScreen)
-                        SizedBox(
-                          width: _propertiesWidth,
-                          child: _properties(),
-                        ),
-                    ],
-                  );
-                },
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final screenWidth = constraints.maxWidth;
+        final isMobileLayout = screenWidth < 600;
+        final isTabletLayout = screenWidth >= 600 && screenWidth < 1000;
+
+        // 1. Mobile Layout (< 600px)
+        if (isMobileLayout) {
+          return Scaffold(
+            key: _scaffoldKey,
+            appBar: AppBar(
+              backgroundColor: const Color(0xFF1E1E4C),
+              elevation: 0,
+              leading: IconButton(
+                icon: const Icon(Icons.menu, color: Colors.white),
+                onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+                tooltip: 'Components',
               ),
+              title: const Text(
+                "Playground",
+                style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold),
+              ),
+              centerTitle: true,
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.tune, color: Colors.white),
+                  onPressed: () => _scaffoldKey.currentState?.openEndDrawer(),
+                  tooltip: 'Properties',
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
+            drawer: Drawer(child: _sidebar()),
+            endDrawer: Drawer(child: _properties()),
+            body: Container(
+              color: const Color(0xFFF0F9FF),
+              child: _preview(),
+            ),
+          );
+        }
+
+        // 2 & 3. Tablet and Desktop Layout
+        return Scaffold(
+          body: Container(
+            color: const Color(0xFFF0F9FF),
+            child: Column(
+              children: [
+                _header(),
+                Expanded(
+                  child: LayoutBuilder(
+                    builder: (context, desktopConstraints) {
+                      return _buildDesktopLayout(desktopConstraints.maxWidth);
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
-  // ================= UTILS & HELPERS ================= (resizeable sidebar handle)
-  
   Widget _verticalResizeHandle({
     required bool isHovering,
     required ValueChanged<bool> onHoverChanged,
@@ -228,8 +284,8 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
           duration: const Duration(milliseconds: 200),
           width: isHovering ? 12 : 6,
           decoration: BoxDecoration(
-            color: isHovering 
-                ? const Color(0xFF1E1E4C).withOpacity(0.1) 
+            color: isHovering
+                ? const Color(0xFF1E1E4C).withOpacity(0.1)
                 : Colors.transparent,
           ),
           child: Stack(
@@ -238,23 +294,25 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
               // Visual Line
               Container(
                 width: 2,
-                color: isHovering 
-                    ? const Color(0xFF1E1E4C).withOpacity(0.3) 
+                color: isHovering
+                    ? const Color(0xFF1E1E4C).withOpacity(0.3)
                     : Colors.black.withOpacity(0.05),
               ),
               // Drag Icon (Dots)
               if (isHovering)
                 Column(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(3, (index) => Container(
-                    width: 3,
-                    height: 3,
-                    margin: const EdgeInsets.symmetric(vertical: 2),
-                    decoration: const BoxDecoration(
-                      color: Color.fromARGB(255, 30, 43, 76),
-                      shape: BoxShape.circle,
-                    ),
-                  )),
+                  children: List.generate(
+                      3,
+                      (index) => Container(
+                            width: 3,
+                            height: 3,
+                            margin: const EdgeInsets.symmetric(vertical: 2),
+                            decoration: const BoxDecoration(
+                              color: Color.fromARGB(255, 30, 43, 76),
+                              shape: BoxShape.circle,
+                            ),
+                          )),
                 ),
             ],
           ),
@@ -270,13 +328,17 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
       height: 70, // Increased back to 70 for better proportion with larger bars
       padding: const EdgeInsets.symmetric(horizontal: 24),
       decoration: const BoxDecoration(
-        color: Color(0xFF1E1E4C), // Dark HDFC Blue
+        color: Color(0xFF0F326A), // Dark HDFC Blue
       ),
       child: Row(
         children: [
-          Image.asset('assets/hdfc_logo.png', height: 36,), // Scaled up slightly
+          Image.asset(
+            'assets/hdfc_logo.png',
+            height: 36,
+          ), // Scaled up slightly
           const SizedBox(width: 40),
-          const VerticalDivider(color: Colors.white24, indent: 18, endIndent: 18),
+          const VerticalDivider(
+              color: Colors.white24, indent: 18, endIndent: 18),
           const SizedBox(width: 40),
           RichText(
             text: TextSpan(
@@ -346,9 +408,11 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
                 },
                 decoration: InputDecoration(
                   hintText: "Search components...",
-                  hintStyle: const TextStyle(color: Colors.black26, fontSize: 14),
-                  prefixIcon: const Icon(Icons.search, color: Color(0xFF1E1E4C), size: 20),
-                  suffixIcon: _searchQuery.isNotEmpty 
+                  hintStyle:
+                      const TextStyle(color: Colors.black26, fontSize: 14),
+                  prefixIcon: const Icon(Icons.search,
+                      color: Color(0xFF1E1E4C), size: 20),
+                  suffixIcon: _searchQuery.isNotEmpty
                       ? IconButton(
                           icon: const Icon(Icons.close, size: 18),
                           onPressed: () {
@@ -357,14 +421,14 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
                               _searchQuery = "";
                             });
                           },
-                        ) 
+                        )
                       : null,
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(vertical: 14),
                 ),
               ),
             ),
-            
+
             // Inline or after Search Suggestions dialogue
             if (_searchQuery.isNotEmpty)
               Container(
@@ -388,11 +452,12 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
                       shrinkWrap: true,
                       padding: EdgeInsets.zero,
                       children: componentRegistry
-                          .where((c) => c.name.toLowerCase().contains(_searchQuery))
+                          .where((c) =>
+                              c.name.toLowerCase().contains(_searchQuery))
                           .map((c) => ListTile(
                                 dense: true,
                                 title: Text(
-                                  c.name,
+                                  _formatName(c.name),
                                   style: const TextStyle(
                                     color: Color.fromARGB(255, 0, 33, 179),
                                     fontWeight: FontWeight.w700,
@@ -400,7 +465,8 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
                                 ),
                                 subtitle: Text(
                                   c.category,
-                                  style: const TextStyle(fontSize: 11, color: Colors.black45),
+                                  style: const TextStyle(
+                                      fontSize: 11, color: Colors.black45),
                                 ),
                                 onTap: () {
                                   setState(() {
@@ -424,7 +490,6 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
             _categoryGlassContainer("Atoms"),
             _categoryGlassContainer("Molecules"),
             _categoryGlassContainer("Organisms"),
-            _categoryGlassContainer("Assets"),
           ],
         ),
       ),
@@ -437,42 +502,50 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
 
   Widget _category(String category) {
     final items = componentRegistry
-        .where((c) => c.category == category && c.name.toLowerCase().contains(_searchQuery))
+        .where((c) =>
+            c.category == category &&
+            c.name.toLowerCase().contains(_searchQuery))
         .toList();
-    
+
     // Auto-expand if searching and there are matches
     final bool isSearching = _searchQuery.isNotEmpty;
-    final bool isExpanded = isSearching ? items.isNotEmpty : (_expandedCategories[category] ?? false);
+    final bool isExpanded = isSearching
+        ? items.isNotEmpty
+        : (_expandedCategories[category] ?? false);
 
     if (isSearching && items.isEmpty) return const SizedBox();
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: const Color.fromARGB(255, 182, 205, 225), // Distinct shade for categories
+        color: const Color.fromARGB(
+            255, 182, 205, 225), // Distinct shade for categories
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           InkWell(
-            onTap: () => setState(() => _expandedCategories[category] = !isExpanded),
+            onTap: () =>
+                setState(() => _expandedCategories[category] = !isExpanded),
             borderRadius: BorderRadius.circular(16),
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                    Text(
-                      category,
-                      style: const TextStyle(
-                        color: Color(0xFF1A1A1A),
-                        fontWeight: FontWeight.bold,
-                        fontSize: 20,
-                      ),
+                  Text(
+                    category,
+                    style: const TextStyle(
+                      color: Color(0xFF1A1A1A),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 20,
                     ),
+                  ),
                   Icon(
-                    isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                    isExpanded
+                        ? Icons.keyboard_arrow_up
+                        : Icons.keyboard_arrow_down,
                     color: Colors.black45,
                     size: 20,
                   ),
@@ -489,27 +562,37 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                     child: Text(
                       "No components",
-                      style: const TextStyle(color: Colors.black38, fontSize: 12),
+                      style:
+                          const TextStyle(color: Colors.black38, fontSize: 12),
                     ),
                   )
                 else
                   ...items.map(
                     (c) => Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 2),
                       child: ListTile(
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 0),
                         dense: true,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10)),
                         title: Text(
-                          c.name,
+                          _formatName(c.name),
                           style: TextStyle(
-                            color: selectedComponent?.name == c.name ? const Color.fromARGB(255, 0, 33, 179) : Colors.black87, //selected items in the sidebar
+                            color: selectedComponent?.name == c.name
+                                ? const Color.fromARGB(255, 0, 33, 179)
+                                : Colors
+                                    .black87, //selected items in the sidebar
                             fontSize: 14,
-                            fontWeight: selectedComponent?.name == c.name ? FontWeight.w600 : FontWeight.normal,
+                            fontWeight: selectedComponent?.name == c.name
+                                ? FontWeight.w600
+                                : FontWeight.normal,
                           ),
                         ),
                         selected: selectedComponent?.name == c.name,
-                        selectedTileColor: const Color(0xFFBAE6FD), // Distinct blue for selected
+                        selectedTileColor: const Color(
+                            0xFFBAE6FD), // Distinct blue for selected
                         onTap: () {
                           setState(() {
                             selectedComponent = c;
@@ -524,7 +607,9 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
                 const SizedBox(height: 12),
               ],
             ),
-            crossFadeState: isExpanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+            crossFadeState: isExpanded
+                ? CrossFadeState.showSecond
+                : CrossFadeState.showFirst,
             duration: const Duration(milliseconds: 250),
           ),
         ],
@@ -550,7 +635,7 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        selectedComponent?.name ?? "Select Component",
+                        selectedComponent != null ? _formatName(selectedComponent!.name) : "Select Component",
                         style: const TextStyle(
                           color: Color(0xFF1E1E4C),
                           fontSize: 28,
@@ -574,7 +659,7 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
                 // Desktop/Mobile/Full Screen Toggle Row
                 Container(
                   decoration: BoxDecoration(
-                    color: const Color.fromARGB(255, 178, 230, 254),
+                    color: const Color.fromARGB(255, 233, 236, 237),
                     borderRadius: BorderRadius.circular(16),
                   ),
                   padding: const EdgeInsets.all(6),
@@ -595,62 +680,72 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
           Expanded(
             child: selectedComponent == null
                 ? const Center(child: Text("Select Component to Preview"))
-                : _isFullScreen
-                    ? Container(
-                        color: const Color.fromARGB(255, 193, 230, 255),
-                        child: selectedComponent!.name == 'NetBankingLoginPage'
-                            ? selectedComponent!.builder(currentProps, isFullScreen: true)
-                            : Center(
-                                child: Transform.scale(
-                                  scale: _getComponentScale(),
-                                  child: selectedComponent!.builder(currentProps, isFullScreen: false),
-                                ),
-                              ),
-                      )
-                    : LayoutBuilder(
-                        builder: (context, constraints) {
-                          // Constant "Common Screen" size (7:5 aspect ratio)
-                          const double designWidth = 1440.0;
-                          const double designHeight = 900.0;
-                          
-                          return Center(
-                            child: FittedBox(
-                              fit: BoxFit.scaleDown,
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: const Color.fromARGB(255, 193, 230, 255),
-                                  borderRadius: BorderRadius.circular(12),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.1),
-                                      blurRadius: 30,
-                                      offset: const Offset(0, 15),
-                                    ),
-                                  ],
-                                ),
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(12),
-                                  child: SizedBox(
-                                    width: designWidth,
-                                    height: designHeight,
-                                    child: Center(
-                                      key: ValueKey(_refreshCounter),
-                                      child: Padding(
-                                        padding: const EdgeInsets.all(20), // Standard padding for components on the common screen
-                                        child: Center(
+                : _isFullScreen && selectedComponent!.category == 'Pages'
+                    ? selectedComponent!.builder(currentProps,
+                        isFullScreen: true, onUpdate: () => setState(() {}))
+                    : Center(
+                        child: FittedBox(
+                          fit: BoxFit.contain,
+                          child: _isFullScreen
+                              ? Container(
+                                  width: 1440,
+                                  height: 900,
+                                  color:
+                                      const Color.fromARGB(255, 247, 247, 251),
+                                  child: selectedComponent!.name ==
+                                          'NetBankingLoginPage'
+                                      ? selectedComponent!.builder(currentProps,
+                                          isFullScreen: true,
+                                          onUpdate: () => setState(() {}))
+                                      : Center(
                                           child: Transform.scale(
                                             scale: _getComponentScale(),
-                                            child: selectedComponent!.builder(currentProps, isFullScreen: false),
+                                            child: selectedComponent!.builder(
+                                                currentProps,
+                                                isFullScreen: false,
+                                                onUpdate: () =>
+                                                    setState(() {})),
+                                          ),
+                                        ),
+                                )
+                              : Container(
+                                  decoration: BoxDecoration(
+                                    color: const Color.fromARGB(
+                                        255, 246, 247, 248),
+                                    borderRadius: BorderRadius.circular(12),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.1),
+                                        blurRadius: 30,
+                                        offset: const Offset(0, 15),
+                                      ),
+                                    ],
+                                  ),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(12),
+                                    child: SizedBox(
+                                      width: 1440,
+                                      height: 900,
+                                      child: Center(
+                                        key: ValueKey(_refreshCounter),
+                                        child: Padding(
+                                          padding: const EdgeInsets.all(20),
+                                          child: Center(
+                                            child: Transform.scale(
+                                              scale: _getComponentScale(),
+                                              child: selectedComponent!.builder(
+                                                  currentProps,
+                                                  isFullScreen: false,
+                                                  onUpdate: () =>
+                                                      setState(() {})),
+                                            ),
                                           ),
                                         ),
                                       ),
                                     ),
                                   ),
                                 ),
-                              ),
-                            ),
-                          );
-                        },
+                        ),
                       ),
           ),
         ],
@@ -720,15 +815,18 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.code_rounded, color: Colors.black, size: 22),
+                      icon: const Icon(Icons.code_rounded,
+                          color: Colors.black, size: 22),
                       onPressed: () => _showCodePreview(),
                       tooltip: "View Component Code",
                     ),
                     IconButton(
-                      icon: const Icon(Icons.refresh_rounded, color: Colors.black, size: 22),
+                      icon: const Icon(Icons.refresh_rounded,
+                          color: Colors.black, size: 22),
                       onPressed: () {
                         setState(() {
-                          currentProps = Map.from(selectedComponent!.defaultProps);
+                          currentProps =
+                              Map.from(selectedComponent!.defaultProps);
                           _updateControllers();
                           _refreshCounter++;
                         });
@@ -737,70 +835,110 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
                     ),
                   ],
                 ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          
-          // Render all properties dynamically
-          ...currentProps.entries.map((entry) {
-            final key = entry.key;
-            final value = entry.value;
+              ],
+            ),
+            const SizedBox(height: 16),
 
-            if (value is bool) {
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: _propertyBoolInput(_capitalize(key), key),
-              );
-            } else if (value is double || value is int) {
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: _propertyNumericInput(_capitalize(key), key),
-              );
-            } else if (value is Color) {
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: _propertyColorInput(_capitalize(key), key),
-              );
-            } else if (value is String) {
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: _propertyTextInput(_capitalize(key), key),
-              );
-            } else if (value is FontWeight) {
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: _propertyFontWeightInput(_capitalize(key), key),
-              );
-            } else if (key.toLowerCase().contains("variant") || 
-                       key.toLowerCase().contains("size") || 
-                       key.toLowerCase().contains("style") ||
-                       key.toLowerCase().contains("align")) {
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: _propertyEnumInput(_capitalize(key), key),
-              );
-            }
-            return const SizedBox();
-          }),
+            // Render all properties dynamically
+            ...currentProps.entries.map((entry) {
+              final key = entry.key;
+              final value = entry.value;
 
-          const SizedBox(height: 16),
-          _propertyGroup(
-            title: "Component Info",
-            children: [
-              _infoRow("Name", selectedComponent?.name ?? ""),
-              _infoRow("Category", selectedComponent?.category ?? ""),
-              _infoRow("Props", currentProps.length.toString()),
-            ],
-          ),
-        ],
+              if (key.startsWith('_')) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child:
+                      _infoRow(_formatName(key.substring(1)), value.toString()),
+                );
+              }
+
+              // High priority: Check if this property has specific options defined in metadata
+              final hasOptions =
+                  selectedComponent?.options?.containsKey(key) ?? false;
+              final isKnownEnum = key.toLowerCase().contains("variant") ||
+                  key.toLowerCase().contains("style") ||
+                  key.toLowerCase().contains("align");
+
+              // Only treat as enum if it's NOT a numeric value (fontSize is numeric, not enum)
+              if ((hasOptions || isKnownEnum) &&
+                  value is! double &&
+                  value is! int) {
+                if (key.toLowerCase() == "size") {
+                  final String displayLabel = (selectedComponent?.name == 'Text' && key == 'size') 
+                      ? "Font Size" 
+                      : _formatName(key);
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: _propertySegmentedInput(displayLabel, key),
+                  );
+                }
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: _propertyEnumInput(_formatName(key), key),
+                );
+              }
+
+              if (value is bool) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: _propertyBoolInput(_formatName(key), key),
+                );
+              } else if (value is List<String>) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: _propertyListInput(_formatName(key), key),
+                );
+              } else if (value is double || value is int) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: _propertyNumericInput(_formatName(key), key),
+                );
+              } else if (value is Color) {
+                final String displayLabel = (selectedComponent?.name == 'TextField' && key == 'color')
+                    ? "Text Color"
+                    : _formatName(key);
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: _propertyColorInput(displayLabel, key),
+                );
+              } else if (value is String) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: _propertyTextInput(_formatName(key), key),
+                );
+              } else if (value is FontWeight) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: _propertyFontWeightInput(_formatName(key), key),
+                );
+              }
+              return const SizedBox();
+            }),
+
+            const SizedBox(height: 16),
+            _propertyGroup(
+              title: "Component Info",
+              children: [
+                _infoRow("Name", selectedComponent?.name ?? ""),
+                _infoRow("Category", selectedComponent?.category ?? ""),
+                _infoRow("Props", currentProps.length.toString()),
+              ],
+            ),
+          ],
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
-  String _capitalize(String s) => s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
+  String _formatName(String s) {
+    if (s.isEmpty) return s;
+    if (s == 'CustomerIDUserID') return 'Customer ID / User ID';
+    final formatted = s.replaceAllMapped(RegExp(r'([a-z])([A-Z])'), (m) => '${m.group(1)} ${m.group(2)}');
+    return formatted[0].toUpperCase() + formatted.substring(1);
+  }
 
-  Widget _propertyGroup({required String title, required List<Widget> children}) {
+  Widget _propertyGroup(
+      {required String title, required List<Widget> children}) {
     return GlassContainer(
       padding: const EdgeInsets.all(16),
       opacity: 0.05,
@@ -810,7 +948,8 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
         children: [
           Text(
             title,
-            style: const TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold),
+            style: const TextStyle(
+                color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 16),
           ...children,
@@ -823,7 +962,9 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
     return SwitchListTile(
       dense: true,
       contentPadding: EdgeInsets.zero,
-      title: Text(label, style: const TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600)),
+      title: Text(label,
+          style: const TextStyle(
+              color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600)),
       value: currentProps[key] ?? false,
       onChanged: (val) => setState(() => currentProps[key] = val),
       activeThumbColor: const Color(0xFF1E1E4C),
@@ -833,11 +974,15 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
   Widget _propertyTextInput(String label, String key) {
     bool disabled = currentProps["disabled"] ?? false;
     final controller = _controllers[key];
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(color: Colors.black, fontSize: 12, fontWeight: FontWeight.w600)),
+        Text(label,
+            style: const TextStyle(
+                color: Colors.black,
+                fontSize: 12,
+                fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
         TextField(
           enabled: !disabled,
@@ -857,28 +1002,28 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
     bool disabled = currentProps["disabled"] ?? false;
     final value = (currentProps[key] ?? 0.0).toDouble();
     final controller = _controllers[key];
-    
+
     // Determine bounds and properties based on key name
     double min = 0;
     double max = 1000;
     int decimals = 0;
-    
+
     final lowerKey = key.toLowerCase();
     if (lowerKey.contains("opacity")) {
       max = 1.0;
       decimals = 2;
-    } else if (lowerKey.contains("blur")) {
-      max = 50.0;
-      decimals = 1;
     } else if (lowerKey.contains("radius")) {
       max = 100.0;
     } else if (lowerKey.contains("fontsize")) {
       min = 8.0;
       max = 120.0;
-    } else if (lowerKey.contains("width") || lowerKey.contains("height")) {
+    } else if (lowerKey.contains("width")) {
+      min = 191.0;
+      max = selectedComponent?.name == 'TextField' ? 850.0 : 1000.0;
+    } else if (lowerKey.contains("height")) {
+      min = 80.0;
       max = 1200.0;
-      // Atoms usually don't need 1200px height, 400px is plenty and prevents UI breakage
-      if (lowerKey.contains("height") && selectedComponent?.category == 'Atoms') {
+      if (selectedComponent?.category == 'Atoms') {
         max = 400.0;
       }
     } else if (lowerKey.contains("length")) {
@@ -886,8 +1031,8 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
       max = 100.0;
       decimals = 0;
     } else if (lowerKey.contains("offset")) {
-      min = -1200.0;
-      max = 1200.0;
+      min = -280.0;
+      max = 280.0;
     } else if (lowerKey.contains("scale") || lowerKey.contains("size")) {
       min = 0.0;
       max = 10.0;
@@ -900,7 +1045,13 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Expanded(child: Text(label, style: const TextStyle(color: Colors.black, fontSize: 14, fontWeight: FontWeight.w600), overflow: TextOverflow.ellipsis)),
+            Expanded(
+                child: Text(label,
+                    style: const TextStyle(
+                        color: Colors.black,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600),
+                    overflow: TextOverflow.ellipsis)),
             SizedBox(
               width: 60,
               height: 24,
@@ -908,7 +1059,10 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
                 enabled: !disabled,
                 controller: controller,
                 textAlign: TextAlign.right,
-                style: const TextStyle(color: Colors.black, fontSize: 14, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                    color: Colors.black,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold),
                 decoration: const InputDecoration(
                   isDense: true,
                   border: InputBorder.none,
@@ -936,14 +1090,18 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
             value: value.clamp(min, max),
             min: min,
             max: max,
-            onChanged: disabled ? null : (val) {
-              setState(() {
-                currentProps[key] = val;
-                if (controller != null) {
-                  controller.text = decimals > 0 ? val.toStringAsFixed(decimals) : val.toInt().toString();
-                }
-              });
-            },
+            onChanged: disabled
+                ? null
+                : (val) {
+                    setState(() {
+                      currentProps[key] = val;
+                      if (controller != null) {
+                        controller.text = decimals > 0
+                            ? val.toStringAsFixed(decimals)
+                            : val.toInt().toString();
+                      }
+                    });
+                  },
             activeColor: const Color(0xFF1E1E4C),
             inactiveColor: Colors.black12,
           ),
@@ -954,17 +1112,26 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
 
   Widget _propertyColorInput(String label, String key) {
     final Color currentColor = currentProps[key] ?? Colors.white;
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Expanded(child: Text(label, style: const TextStyle(color: Colors.black, fontSize: 13, fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis)),
+            Expanded(
+                child: Text(label,
+                    style: const TextStyle(
+                        color: Colors.black,
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold),
+                    overflow: TextOverflow.ellipsis)),
             Text(
               '#${currentColor.value.toRadixString(16).substring(2).toUpperCase()}',
-              style: const TextStyle(color: Colors.black54, fontSize: 12, fontWeight: FontWeight.w500),
+              style: const TextStyle(
+                  color: Colors.black54,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500),
             ),
           ],
         ),
@@ -977,7 +1144,55 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
             });
           },
         ),
+        if ((selectedComponent?.name == 'Button' || selectedComponent?.name == 'Text') && key == 'color') ...[
+          const SizedBox(height: 16),
+          const Text(
+            "HDFC Blue Palette",
+            style: TextStyle(
+                color: Colors.black54,
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 0.5),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              _colorPaletteSwatch(const Color(0xFFE5EDF4), key), // Light Blue
+              _colorPaletteSwatch(const Color(0xFF3B82F6), key), // Medium Blue
+              _colorPaletteSwatch(const Color(0xFF1E40AF), key), // Dark Blue
+              _colorPaletteSwatch(const Color(0xFF0B1F5E), key), // Deep Blue
+            ],
+          ),
+        ],
       ],
+    );
+  }
+
+  Widget _colorPaletteSwatch(Color paletteColor, String key) {
+    final bool isSelected = (currentProps[key] as Color?)?.value == paletteColor.value;
+    return GestureDetector(
+      onTap: () => setState(() => currentProps[key] = paletteColor),
+      child: Container(
+        width: 32,
+        height: 32,
+        margin: const EdgeInsets.only(right: 12),
+        decoration: BoxDecoration(
+          color: paletteColor,
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: isSelected ? Colors.black : Colors.white24,
+            width: isSelected ? 2.5 : 1,
+          ),
+          boxShadow: [
+            if (isSelected)
+              BoxShadow(
+                color: paletteColor.withOpacity(0.4),
+                blurRadius: 8,
+                spreadRadius: 2,
+              ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -987,8 +1202,14 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Expanded(child: Text(label, style: const TextStyle(color: Colors.black, fontSize: 14))),
-          Text(value, style: const TextStyle(color: Colors.black, fontSize: 14, fontWeight: FontWeight.bold)),
+          Expanded(
+              child: Text(label,
+                  style: const TextStyle(color: Colors.black, fontSize: 14))),
+          Text(value,
+              style: const TextStyle(
+                  color: Colors.black,
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold)),
         ],
       ),
     );
@@ -1011,96 +1232,166 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
     );
   }
 
-
   void _showCodePreview() {
     if (selectedComponent == null) return;
 
-    final String code = _generateCodeString();
+    final String usageCode = _generateCodeString();
+    String implementationCode =
+        GeneratedSources.implementationCode[selectedComponent!.name] ??
+            "Implementation code not available for this component.";
+            
+    // Live sync properties into the source code view
+    currentProps.forEach((key, value) {
+      if (!key.startsWith('_')) {
+        String valStr = value.toString();
+        if (value is String) valStr = "'$value'";
+        else if (value is Color) valStr = "const Color(0x${value.value.toRadixString(16).padLeft(8, '0').toUpperCase()})";
+        else if (value is Offset) valStr = "const Offset(${value.dx}, ${value.dy})";
+        // Attempt to replace constructor defaults: this.property = defaultValue,
+        implementationCode = implementationCode.replaceAllMapped(
+          RegExp('this\\.' + key + r'\s*=\s*[^,)]+([,)])'),
+          (match) => 'this.$key = $valStr${match.group(1)}'
+        );
+      }
+    });
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFFF0F9FF),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: Row(
-          children: [
-            const Icon(Icons.code_rounded, color: Color(0xFF1E1E4C)),
-            const SizedBox(width: 12),
-            Text(
-              "${selectedComponent!.name} Code",
-              style: const TextStyle(color: Color(0xFF1E1E4C), fontWeight: FontWeight.bold, fontSize: 20),
-            ),
-          ],
-        ),
-        content: Container(
-          width: 600,
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.black.withOpacity(0.05)),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.02),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: SingleChildScrollView(
-            child: Column(
+      builder: (context) => DefaultTabController(
+        length: 2,
+        child: StatefulBuilder(builder: (context, setDialogState) {
+          return AlertDialog(
+            backgroundColor: const Color(0xFFF0F9FF),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+            title: Column(
               mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  "Copy and use this code in your Flutter app:",
-                  style: const TextStyle(color: Colors.black54, fontSize: 13, fontWeight: FontWeight.w500),
+                Row(
+                  children: [
+                    const Icon(Icons.code_rounded, color: Color(0xFF1E1E4C)),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        "${_formatName(selectedComponent!.name)} Code",
+                        style: const TextStyle(
+                            color: Color(0xFF1E1E4C),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 20),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 16),
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF8FAFC),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: SelectableText(
-                    code,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Color(0xFF1E1E4C),
-                      height: 1.5,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
+                const TabBar(
+                  labelColor: Color(0xFF1E1E4C),
+                  unselectedLabelColor: Colors.black38,
+                  indicatorColor: Color(0xFF1E1E4C),
+                  indicatorWeight: 3,
+                  tabs: [
+                    Tab(text: "USAGE"),
+                    Tab(text: "SOURCE CODE"),
+                  ],
                 ),
               ],
             ),
+            content: Container(
+              width: 800,
+              height: 500,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.black.withOpacity(0.05)),
+              ),
+              child: TabBarView(
+                children: [
+                  // Tab 1: Usage
+                  _codeContainer(usageCode, "Copy and use this code in your Flutter app:"),
+                  // Tab 2: Implementation
+                  _codeContainer(implementationCode, "The implementation code for this component:"),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text("Close",
+                    style: TextStyle(
+                        color: Colors.black54, fontWeight: FontWeight.bold)),
+              ),
+              Builder(builder: (context) {
+                return ElevatedButton.icon(
+                  onPressed: () {
+                    final tabIndex = DefaultTabController.of(context).index;
+                    final codeToCopy =
+                        tabIndex == 0 ? usageCode : implementationCode;
+
+                    Clipboard.setData(ClipboardData(text: codeToCopy));
+                    ScaffoldMessenger.of(this.context).showSnackBar(
+                      SnackBar(
+                        content: Text(tabIndex == 0
+                            ? "Usage code copied!"
+                            : "Source code copied!"),
+                        behavior: SnackBarBehavior.floating,
+                        width: 300,
+                      ),
+                    );
+                    Navigator.pop(context);
+                  },
+                  icon: const Icon(Icons.copy_rounded, size: 18),
+                  label: const Text("Copy Active Code"),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF1E1E4C),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                  ),
+                );
+              }),
+            ],
+          );
+        }),
+      ),
+    );
+  }
+
+  Widget _codeContainer(String code, String description) {
+    return Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            description,
+            style: const TextStyle(
+                color: Colors.black54,
+                fontSize: 13,
+                fontWeight: FontWeight.w500),
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Close", style: TextStyle(color: Colors.black54, fontWeight: FontWeight.bold)),
-          ),
-          ElevatedButton.icon(
-            onPressed: () {
-              Clipboard.setData(ClipboardData(text: code));
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text("Code copied to clipboard!"),
-                  behavior: SnackBarBehavior.floating,
-                  width: 300,
+          const SizedBox(height: 16),
+          Expanded(
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: SingleChildScrollView(
+                child: SelectableText(
+                  code,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontFamily: 'monospace',
+                    color: Color(0xFF1E1E4C),
+                    height: 1.5,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
-              );
-              Navigator.pop(context);
-            },
-            icon: const Icon(Icons.copy_rounded, size: 18),
-            label: const Text("Copy Code"),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF1E1E4C),
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
             ),
           ),
         ],
@@ -1109,37 +1400,81 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
   }
 
   String _generateCodeString() {
+    if (selectedComponent == null) return "No component selected";
+    
     final name = selectedComponent!.name;
     final buffer = StringBuffer();
-    
-    // Class name formatting
+
+    // 1. Format class name (remove spaces)
     String className = name.replaceAll(' ', '');
-    
+
     buffer.writeln('$className(');
+
+    // 2. Prep properties (combine x/y offsets, filter internal)
+    final Map<String, dynamic> props = Map.from(currentProps);
     
-    currentProps.forEach((key, value) {
+    // Combine xOffset/yOffset or offsetX/offsetY into 'offset'
+    if (props.containsKey('xOffset') && props.containsKey('yOffset')) {
+      final x = props.remove('xOffset') ?? 0.0;
+      final y = props.remove('yOffset') ?? 0.0;
+      props['offset'] = Offset(x.toDouble(), y.toDouble());
+    } else if (props.containsKey('offsetX') && props.containsKey('offsetY')) {
+      final x = props.remove('offsetX') ?? 0.0;
+      final y = props.remove('offsetY') ?? 0.0;
+      props['offset'] = Offset(x.toDouble(), y.toDouble());
+    }
+
+    // 3. Generate properties code
+    props.forEach((key, value) {
+      // Skip internal props starting with '_'
+      if (key.startsWith('_')) return;
+
       buffer.write('  $key: ');
-      if (value is String) {
+
+      final options = selectedComponent!.options?[key];
+      final lowerKey = key.toLowerCase();
+
+      // Handle Enum-like string options
+      if (options != null && value is String && (lowerKey.contains('variant') || lowerKey.contains('style') || lowerKey.contains('size') || lowerKey.contains('type'))) {
+        // Heuristic: ComponentName + CapitalizedKey + Variant
+        // For CustomButton -> ButtonSizeVariant.medium
+        String enumPrefix = className;
+        if (enumPrefix.startsWith('Custom') && enumPrefix.length > 6) {
+          enumPrefix = enumPrefix.substring(6);
+        }
+        String enumType = '${enumPrefix}${_formatName(key)}Variant';
+        buffer.writeln('$enumType.${value.toLowerCase()},');
+      } 
+      else if (value is String) {
         buffer.writeln("'$value',");
-      } else if (value is Color) {
+      } 
+      else if (value is Color) {
         String colorHex = value.value.toRadixString(16).toUpperCase().padLeft(8, '0');
-        buffer.writeln('Color(0x$colorHex),');
-      } else if (value is FontWeight) {
+        buffer.writeln('const Color(0x$colorHex),');
+      } 
+      else if (value is FontWeight) {
         buffer.writeln('$value,');
-      } else if (value is Offset) {
-        buffer.writeln('Offset(${value.dx}, ${value.dy}),');
-      } else {
+      } 
+      else if (value is Offset) {
+        buffer.writeln('const Offset(${value.dx}, ${value.dy}),');
+      }
+      else if (value is List) {
+        buffer.write('[ ');
+        buffer.write(value.map((e) => e is String ? "'$e'" : e.toString()).join(', '));
+        buffer.writeln(' ],');
+      }
+      else {
         buffer.writeln('$value,');
       }
     });
-    
+
     buffer.write(')');
     return buffer.toString();
   }
 
   Widget _propertyEnumInput(String label, String key) {
     List<String> options = selectedComponent?.options?[key] ?? [];
-    
+
     if (options.isEmpty) {
       final lowerKey = key.toLowerCase();
       if (lowerKey.contains("variant")) {
@@ -1152,7 +1487,7 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
         options = ["left", "center", "right"];
       }
     }
-    
+
     if (options.isEmpty) return const SizedBox();
 
     final String currentValue = currentProps[key]?.toString() ?? options.first;
@@ -1160,7 +1495,11 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(color: Colors.black, fontSize: 13, fontWeight: FontWeight.bold)),
+        Text(label,
+            style: const TextStyle(
+                color: Colors.black,
+                fontSize: 13,
+                fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -1171,9 +1510,11 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
           ),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<String>(
-              value: options.contains(currentValue) ? currentValue : options.first,
+              value:
+                  options.contains(currentValue) ? currentValue : options.first,
               isExpanded: true,
-              icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.black54, size: 20),
+              icon: const Icon(Icons.keyboard_arrow_down_rounded,
+                  color: Colors.black54, size: 20),
               style: const TextStyle(color: Colors.black, fontSize: 14),
               items: options.map((String value) {
                 return DropdownMenuItem<String>(
@@ -1195,30 +1536,84 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
     );
   }
 
+  Widget _propertySegmentedInput(String label, String key) {
+    List<String> options = selectedComponent?.options?[key] ?? [];
+    if (options.isEmpty) {
+      options = ["Small", "Medium", "Large"];
+    }
+
+    final String currentValue = currentProps[key]?.toString() ?? options.first;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label,
+            style: const TextStyle(
+                color: Colors.black,
+                fontSize: 13,
+                fontWeight: FontWeight.bold)),
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.black12),
+          ),
+          child: Row(
+            children: options.map((option) {
+              final isSelected = currentValue == option;
+              return Expanded(
+                child: GestureDetector(
+                  onTap: () => setState(() {
+                    currentProps[key] = option;
+                    _refreshCounter++;
+                  }),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    decoration: BoxDecoration(
+                      color: isSelected ? const Color(0xFF1E1E4C) : Colors.transparent,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      option,
+                      style: TextStyle(
+                        color: isSelected ? Colors.white : Colors.black87,
+                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _propertyFontWeightInput(String label, String key) {
     final FontWeight currentWeight = currentProps[key] ?? FontWeight.normal;
     final List<FontWeight> weights = [
-      FontWeight.w100, FontWeight.w200, FontWeight.w300, FontWeight.w400,
-      FontWeight.w500, FontWeight.w600, FontWeight.w700, FontWeight.w800, FontWeight.w900,
+      FontWeight.w100,
+      FontWeight.w700,
     ];
-    
+
     String weightName(FontWeight w) {
-      if (w == FontWeight.w100) return "Thin (100)";
-      if (w == FontWeight.w200) return "ExtraLight (200)";
-      if (w == FontWeight.w300) return "Light (300)";
-      if (w == FontWeight.w400) return "Regular (400)";
-      if (w == FontWeight.w500) return "Medium (500)";
-      if (w == FontWeight.w600) return "SemiBold (600)";
-      if (w == FontWeight.w700) return "Bold (700)";
-      if (w == FontWeight.w800) return "ExtraBold (800)";
-      if (w == FontWeight.w900) return "Black (900)";
+      if (w == FontWeight.w100) return "Thin";
+      if (w == FontWeight.w700) return "Bold";
       return "Weight";
     }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(color: Colors.black, fontSize: 13, fontWeight: FontWeight.bold)),
+        Text(label,
+            style: const TextStyle(
+                color: Colors.black,
+                fontSize: 13,
+                fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -1231,17 +1626,57 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
             child: DropdownButton<FontWeight>(
               value: currentWeight,
               isExpanded: true,
-              icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.black54, size: 20),
+              icon: const Icon(Icons.keyboard_arrow_down_rounded,
+                  color: Colors.black54, size: 20),
               style: const TextStyle(color: Colors.black, fontSize: 14),
-              items: weights.map((w) => DropdownMenuItem(
-                value: w,
-                child: Text(weightName(w), style: const TextStyle()),
-              )).toList(),
+              items: weights
+                  .map((w) => DropdownMenuItem(
+                        value: w,
+                        child: Text(weightName(w), style: const TextStyle()),
+                      ))
+                  .toList(),
               onChanged: (val) {
                 if (val != null) setState(() => currentProps[key] = val);
               },
             ),
           ),
+        ),
+      ],
+    );
+  }
+
+  Widget _propertyListInput(String label, String key) {
+    final List<String> items = List<String>.from(currentProps[key] ?? []);
+    final controller =
+        _controllers[key] ?? TextEditingController(text: items.join(', '));
+    if (!_controllers.containsKey(key)) _controllers[key] = controller;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label,
+            style: const TextStyle(
+                color: Colors.black,
+                fontSize: 13,
+                fontWeight: FontWeight.bold)),
+        const SizedBox(height: 8),
+        TextField(
+          controller: controller,
+          style: const TextStyle(fontSize: 14),
+          decoration: _inputDecoration().copyWith(
+            hintText: "Item 1, Item 2, Item 3",
+            helperText: "Separate items with commas",
+            helperStyle: const TextStyle(fontSize: 10),
+          ),
+          onChanged: (val) {
+            setState(() {
+              currentProps[key] = val
+                  .split(',')
+                  .map((e) => e.trim())
+                  .where((e) => e.isNotEmpty)
+                  .toList();
+            });
+          },
         ),
       ],
     );
@@ -1296,11 +1731,12 @@ class _AdvancedColorPickerState extends State<_AdvancedColorPicker> {
           builder: (context, constraints) {
             final width = constraints.maxWidth;
             const height = 150.0;
-            
+
             return GestureDetector(
               onPanUpdate: (details) {
                 final RenderBox box = context.findRenderObject() as RenderBox;
-                final Offset localOffset = box.globalToLocal(details.globalPosition);
+                final Offset localOffset =
+                    box.globalToLocal(details.globalPosition);
                 setState(() {
                   s = (localOffset.dx / width).clamp(0.0, 1.0);
                   v = (1.0 - (localOffset.dy / height)).clamp(0.0, 1.0);
@@ -1343,7 +1779,9 @@ class _AdvancedColorPickerState extends State<_AdvancedColorPicker> {
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               border: Border.all(color: Colors.white, width: 2),
-                              boxShadow: const [BoxShadow(blurRadius: 4, color: Colors.black26)],
+                              boxShadow: const [
+                                BoxShadow(blurRadius: 4, color: Colors.black26)
+                              ],
                             ),
                           ),
                         ),
@@ -1379,7 +1817,8 @@ class _AdvancedColorPickerState extends State<_AdvancedColorPicker> {
               trackHeight: 12,
               activeTrackColor: Colors.transparent,
               inactiveTrackColor: Colors.transparent,
-              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8, elevation: 2),
+              thumbShape: const RoundSliderThumbShape(
+                  enabledThumbRadius: 8, elevation: 2),
               overlayShape: const RoundSliderOverlayShape(overlayRadius: 0),
             ),
             child: Slider(
@@ -1405,20 +1844,27 @@ class _AdvancedColorPickerState extends State<_AdvancedColorPicker> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text("HEX", style: TextStyle(fontSize: 10, color: Colors.black54)),
+                  const Text("HEX",
+                      style: TextStyle(fontSize: 10, color: Colors.black54)),
                   const SizedBox(height: 4),
                   TextField(
                     key: ValueKey('hex_${widget.color.value}'),
                     textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                        fontSize: 12, fontWeight: FontWeight.bold),
                     controller: TextEditingController(
-                      text: widget.color.value.toRadixString(16).substring(2).toUpperCase(),
+                      text: widget.color.value
+                          .toRadixString(16)
+                          .substring(2)
+                          .toUpperCase(),
                     ),
                     decoration: InputDecoration(
                       isDense: true,
                       prefixText: '#',
-                      contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
+                      contentPadding: const EdgeInsets.symmetric(
+                          vertical: 8, horizontal: 8),
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(6)),
                     ),
                     onSubmitted: (val) {
                       String hex = val.replaceFirst('#', '');
@@ -1459,11 +1905,13 @@ class _AdvancedColorPickerState extends State<_AdvancedColorPicker> {
     );
   }
 
-  Widget _colorComponentInput(String label, int value, ValueChanged<int> onChanged) {
+  Widget _colorComponentInput(
+      String label, int value, ValueChanged<int> onChanged) {
     return Expanded(
       child: Column(
         children: [
-          Text(label, style: const TextStyle(fontSize: 10, color: Colors.black54)),
+          Text(label,
+              style: const TextStyle(fontSize: 10, color: Colors.black54)),
           const SizedBox(height: 4),
           TextField(
             keyboardType: TextInputType.number,
@@ -1474,7 +1922,8 @@ class _AdvancedColorPickerState extends State<_AdvancedColorPicker> {
             decoration: InputDecoration(
               isDense: true,
               contentPadding: const EdgeInsets.symmetric(vertical: 8),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
+              border:
+                  OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
             ),
             onSubmitted: (val) {
               final parsed = int.tryParse(val);
@@ -1488,6 +1937,3 @@ class _AdvancedColorPickerState extends State<_AdvancedColorPicker> {
     );
   }
 }
-
-
-
