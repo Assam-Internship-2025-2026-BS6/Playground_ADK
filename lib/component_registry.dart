@@ -34,7 +34,7 @@ final List<ComponentMetadata> componentRegistry = [
 
   // Organisms
   ComponentMetadata(
-    name: 'LandingFormOrganism',
+    name: 'Landing Form Organism',
     category: 'Organisms',
     defaultProps: {
       'width': 500.0,
@@ -52,7 +52,7 @@ final List<ComponentMetadata> componentRegistry = [
     },
   ),
   ComponentMetadata(
-    name: 'LeftInfoSection',
+    name: 'Left Info Section',
     category: 'Organisms',
     defaultProps: {
       'width': 550.0,
@@ -66,7 +66,7 @@ final List<ComponentMetadata> componentRegistry = [
     },
   ),
   ComponentMetadata(
-    name: 'RightLoginContainer',
+    name: 'Right Login Container',
     category: 'Organisms',
     defaultProps: {
       'width': 500.0,
@@ -82,7 +82,7 @@ final List<ComponentMetadata> componentRegistry = [
 
   // Molecules
   ComponentMetadata(
-    name: 'QrLogin',
+    name: 'QR Login',
     category: 'Molecules',
     defaultProps: {
       'title': 'Click to scan QR and login',
@@ -90,6 +90,8 @@ final List<ComponentMetadata> componentRegistry = [
       'width': 484.0,
       'height': 120.0,
       'opacity': 0.2,
+      'xOffset': 0.0,
+      'yOffset': 0.0,
     },
     builder: (Map<String, dynamic> props, {bool isFullScreen = false, VoidCallback? onUpdate}) {
       return QrLogin(
@@ -104,7 +106,7 @@ final List<ComponentMetadata> componentRegistry = [
     },
   ),
   ComponentMetadata(
-    name: 'DigicartSecurity',
+    name: 'Digicart Security',
     category: 'Molecules',
     defaultProps: {
       'title': 'Goodbye, Secure Text & Image',
@@ -113,6 +115,8 @@ final List<ComponentMetadata> componentRegistry = [
       'width': 484.0,
       'height': 120.0,
       'opacity': 0.2,
+      'xOffset': 0.0,
+      'yOffset': 0.0,
     },
     builder: (Map<String, dynamic> props, {bool isFullScreen = false, VoidCallback? onUpdate}) {
       return DigicartSecurity(
@@ -127,12 +131,14 @@ final List<ComponentMetadata> componentRegistry = [
     },
   ),
   ComponentMetadata(
-    name: 'LabeledInputField',
+    name: 'Labeled Input Field',
     category: 'Molecules',
     defaultProps: {
       'label': 'Customer ID/ User ID',
       'hintText': 'Enter your ID',
       'width': 700.0,
+      'xOffset': 0.0,
+      'yOffset': 0.0,
     },
     builder: (Map<String, dynamic> props, {bool isFullScreen = false, VoidCallback? onUpdate}) {
       return LabeledInputField(
@@ -143,12 +149,14 @@ final List<ComponentMetadata> componentRegistry = [
     },
   ),
   ComponentMetadata(
-    name: 'PasswordField',
+    name: 'Password Field',
     category: 'Molecules',
     defaultProps: {
       'label': 'Password/ PIN',
       'hintText': 'Enter password',
       'width': 700.0,
+      'xOffset': 0.0,
+      'yOffset': 0.0,
     },
     builder: (Map<String, dynamic> props, {bool isFullScreen = false, VoidCallback? onUpdate}) {
       return PasswordField(
@@ -192,7 +200,7 @@ final List<ComponentMetadata> componentRegistry = [
             activeColor: props['activeColor'] ?? const Color(0xFF1E1E4C),
             offset: Offset(
               (props['xOffset'] as num?)?.toDouble() ?? 0.0,
-              ((props['yOffset'] as num?)?.toDouble() ?? 0.0),
+              -((props['yOffset'] as num?)?.toDouble() ?? 0.0),
             ),
             onChanged: (val) {
               setState(() {
@@ -208,7 +216,7 @@ final List<ComponentMetadata> componentRegistry = [
 
   // Atoms
   ComponentMetadata(
-    name: 'GlassCard',
+    name: 'Glass Card',
     category: 'Atoms',
     defaultProps: {
       'width': 550.0,
@@ -271,7 +279,7 @@ final List<ComponentMetadata> componentRegistry = [
     },
   ),
   ComponentMetadata(
-    name: 'TextField',
+    name: 'Text Field',
     category: 'Atoms',
     defaultProps: {
       'hintText': 'Enter text',
@@ -376,13 +384,15 @@ final List<ComponentMetadata> componentRegistry = [
     },
   ),
   ComponentMetadata(
-    name: 'TextButton',
+    name: 'Text Button',
     category: 'Atoms',
     defaultProps: {
       'text': 'Click Me',
       'fontSize': 40.0,
       'isClickable': true,
       'enableHover': true,
+      'xOffset': 0.0,
+      'yOffset': 0.0,
     },
     builder: (Map<String, dynamic> props, {bool isFullScreen = false, VoidCallback? onUpdate}) {
       return dk.TextButton(
@@ -390,6 +400,10 @@ final List<ComponentMetadata> componentRegistry = [
         fontSize: (props['fontSize'] as num?)?.toDouble() ?? 24.0,
         isClickable: props['isClickable'] ?? true,
         enableHover: props['enableHover'] ?? true,
+        offset: Offset(
+          (props['xOffset'] as num?)?.toDouble() ?? 0.0,
+          -((props['yOffset'] as num?)?.toDouble() ?? 0.0),
+        ),
         onPressed: () => debugPrint('Button Pressed'),
       );
     },
@@ -447,7 +461,7 @@ final List<ComponentMetadata> componentRegistry = [
     },
   ),
   ComponentMetadata(
-    name: 'RadioButton',
+    name: 'Radio Button',
     category: 'Atoms',
     defaultProps: {
       'label': 'Radio Option',
@@ -469,7 +483,7 @@ final List<ComponentMetadata> componentRegistry = [
             labelColor: props['labelColor'] ?? Colors.black87,
             offset: Offset(
               (props['xOffset'] as num?)?.toDouble() ?? 0.0,
-              ((props['yOffset'] as num?)?.toDouble() ?? 0.0),
+              -((props['yOffset'] as num?)?.toDouble() ?? 0.0),
             ),
             onChanged: (val) {
               setState(() {
@@ -484,11 +498,12 @@ final List<ComponentMetadata> componentRegistry = [
     },
   ),
   ComponentMetadata(
-    name: 'ToggleSwitch',
+    name: 'Toggle Switch',
     category: 'Atoms',
     defaultProps: {
       'label': 'Enable Notifications',
       'value': false,
+      'fontSize': 30.0,
       'activeColor': const Color(0xFF1E1E4C),
       'labelColor': Colors.black87,
       'xOffset': 0.0,
@@ -500,11 +515,12 @@ final List<ComponentMetadata> componentRegistry = [
           return dk.ToggleSwitch(
             label: props['label'],
             value: props['value'] ?? false,
+            fontSize: (props['fontSize'] as num?)?.toDouble() ?? 30.0,
             activeColor: props['activeColor'] ?? const Color(0xFF1E1E4C),
             labelColor: props['labelColor'] ?? Colors.black87,
             offset: Offset(
               (props['xOffset'] as num?)?.toDouble() ?? 0.0,
-              ((props['yOffset'] as num?)?.toDouble() ?? 0.0),
+              -((props['yOffset'] as num?)?.toDouble() ?? 0.0),
             ),
             onChanged: (val) {
               setState(() {

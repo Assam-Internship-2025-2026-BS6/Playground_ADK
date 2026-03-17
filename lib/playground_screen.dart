@@ -51,6 +51,7 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
     if (componentRegistry.isNotEmpty) {
       selectedComponent = componentRegistry.first;
       currentProps = Map.from(selectedComponent!.defaultProps);
+      _ensureOffsetProps();
       _updateControllers();
     }
 
@@ -96,6 +97,14 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
         );
       }
     });
+  }
+
+  void _ensureOffsetProps() {
+    if (selectedComponent?.category == 'Molecules' &&
+        selectedComponent?.name != 'Dropdown') {
+      currentProps['xOffset'] = currentProps['xOffset'] ?? 0.0;
+      currentProps['yOffset'] = currentProps['yOffset'] ?? 0.0;
+    }
   }
 
   @override
@@ -207,10 +216,11 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final screenWidth = constraints.maxWidth;
-        final isMobileLayout = screenWidth < 600;
-        final isTabletLayout = screenWidth >= 600 && screenWidth < 1000;
+        final physicalWidth = kIsWeb ? (html.window.screen?.width ?? screenWidth * 2) : screenWidth * 2;
+        final isMobileLayout = screenWidth < (physicalWidth * 0.5);
+        final isTabletLayout = screenWidth >= (physicalWidth * 0.5) && screenWidth < 1000;
 
-        // 1. Mobile Layout (< 600px)
+        // 1. Mobile Layout (< 50% of screen)
         if (isMobileLayout) {
           return Scaffold(
             key: _scaffoldKey,
@@ -218,7 +228,7 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
               backgroundColor: const Color(0xFF1E1E4C),
               elevation: 0,
               leading: IconButton(
-                icon: const Icon(Icons.menu, color: Colors.white),
+                icon: const Icon(Icons.settings, color: Colors.white),
                 onPressed: () => _scaffoldKey.currentState?.openDrawer(),
                 tooltip: 'Components',
               ),
@@ -232,7 +242,7 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
               centerTitle: true,
               actions: [
                 IconButton(
-                  icon: const Icon(Icons.tune, color: Colors.white),
+                  icon: const Icon(Icons.settings, color: Colors.white),
                   onPressed: () => _scaffoldKey.currentState?.openEndDrawer(),
                   tooltip: 'Properties',
                 ),
@@ -472,6 +482,7 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
                                   setState(() {
                                     selectedComponent = c;
                                     currentProps = Map.from(c.defaultProps);
+                                    _ensureOffsetProps();
                                     _updateControllers();
                                     _refreshCounter++;
                                     _searchQuery = "";
@@ -597,6 +608,7 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
                           setState(() {
                             selectedComponent = c;
                             currentProps = Map.from(c.defaultProps);
+                            _ensureOffsetProps();
                             _updateControllers();
                             _refreshCounter++;
                           });
@@ -681,8 +693,7 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
             child: selectedComponent == null
                 ? const Center(child: Text("Select Component to Preview"))
                 : _isFullScreen && selectedComponent!.category == 'Pages'
-                    ? selectedComponent!.builder(currentProps,
-                        isFullScreen: true, onUpdate: () => setState(() {}))
+                    ? _renderComponent(isFullScreen: true)
                     : Center(
                         child: FittedBox(
                           fit: BoxFit.contain,
@@ -700,11 +711,7 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
                                       : Center(
                                           child: Transform.scale(
                                             scale: _getComponentScale(),
-                                            child: selectedComponent!.builder(
-                                                currentProps,
-                                                isFullScreen: false,
-                                                onUpdate: () =>
-                                                    setState(() {})),
+                                            child: _renderComponent(isFullScreen: false),
                                           ),
                                         ),
                                 )
@@ -733,11 +740,7 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
                                           child: Center(
                                             child: Transform.scale(
                                               scale: _getComponentScale(),
-                                              child: selectedComponent!.builder(
-                                                  currentProps,
-                                                  isFullScreen: false,
-                                                  onUpdate: () =>
-                                                      setState(() {})),
+                                              child: _renderComponent(isFullScreen: false),
                                             ),
                                           ),
                                         ),
@@ -751,6 +754,31 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
         ],
       ),
     );
+  }
+
+  Widget _renderComponent({required bool isFullScreen}) {
+    if (selectedComponent == null) return const SizedBox();
+
+    Widget component = selectedComponent!.builder(
+      currentProps,
+      isFullScreen: isFullScreen,
+      onUpdate: () => setState(() {}),
+    );
+
+    // Apply conditional offset for Molecules (except Dropdown)
+    if (selectedComponent!.category == 'Molecules' &&
+        selectedComponent!.name != 'Dropdown') {
+      final x = (currentProps['xOffset'] as num?)?.toDouble() ?? 0.0;
+      final y = (currentProps['yOffset'] as num?)?.toDouble() ?? 0.0;
+      if (x != 0 || y != 0) {
+        component = Transform.translate(
+          offset: Offset(x, -y), // Negative y for up
+          child: component,
+        );
+      }
+    }
+
+    return component;
   }
 
   double _getComponentScale() {
@@ -827,6 +855,7 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
                         setState(() {
                           currentProps =
                               Map.from(selectedComponent!.defaultProps);
+                          _ensureOffsetProps();
                           _updateControllers();
                           _refreshCounter++;
                         });
@@ -1005,7 +1034,7 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
 
     // Determine bounds and properties based on key name
     double min = 0;
-    double max = 1000;
+    double max = 850;
     int decimals = 0;
 
     final lowerKey = key.toLowerCase();
@@ -1018,10 +1047,15 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
       min = 8.0;
       max = 120.0;
     } else if (lowerKey.contains("width")) {
-      min = 191.0;
-      max = selectedComponent?.name == 'TextField' ? 850.0 : 1000.0;
+      final isOrganism = selectedComponent?.category == 'Organisms';
+
+      min = isOrganism ? 434.0 : 191.0;
+
+      max = selectedComponent?.name == 'TextField' ? 850.0 : 850.0;
     } else if (lowerKey.contains("height")) {
-      min = 80.0;
+      final isOrganism = selectedComponent?.category == 'Organisms';
+
+      min = isOrganism ? 680.0 : 80.0;
       max = 1200.0;
       if (selectedComponent?.category == 'Atoms') {
         max = 400.0;
@@ -1170,27 +1204,30 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
 
   Widget _colorPaletteSwatch(Color paletteColor, String key) {
     final bool isSelected = (currentProps[key] as Color?)?.value == paletteColor.value;
-    return GestureDetector(
-      onTap: () => setState(() => currentProps[key] = paletteColor),
-      child: Container(
-        width: 32,
-        height: 32,
-        margin: const EdgeInsets.only(right: 12),
-        decoration: BoxDecoration(
-          color: paletteColor,
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: isSelected ? Colors.black : Colors.white24,
-            width: isSelected ? 2.5 : 1,
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: () => setState(() => currentProps[key] = paletteColor),
+        child: Container(
+          width: 32,
+          height: 32,
+          margin: const EdgeInsets.only(right: 12),
+          decoration: BoxDecoration(
+            color: paletteColor,
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: isSelected ? Colors.black : Colors.white24,
+              width: isSelected ? 2.5 : 1,
+            ),
+            boxShadow: [
+              if (isSelected)
+                BoxShadow(
+                  color: paletteColor.withOpacity(0.4),
+                  blurRadius: 8,
+                  spreadRadius: 2,
+                ),
+            ],
           ),
-          boxShadow: [
-            if (isSelected)
-              BoxShadow(
-                color: paletteColor.withOpacity(0.4),
-                blurRadius: 8,
-                spreadRadius: 2,
-              ),
-          ],
         ),
       ),
     );
@@ -1240,6 +1277,9 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
         GeneratedSources.implementationCode[selectedComponent!.name] ??
             "Implementation code not available for this component.";
             
+    if (implementationCode == "Implementation code not available for this component.") {
+      debugPrint('Source code mismatch: Could not find code for component "${selectedComponent!.name}"');
+    }
     // Live sync properties into the source code view
     currentProps.forEach((key, value) {
       if (!key.startsWith('_')) {
@@ -1695,6 +1735,7 @@ class _AdvancedColorPicker extends StatefulWidget {
 
 class _AdvancedColorPickerState extends State<_AdvancedColorPicker> {
   late double h, s, v;
+  bool _isInteracting = false;
 
   @override
   void initState() {
@@ -1722,6 +1763,14 @@ class _AdvancedColorPickerState extends State<_AdvancedColorPicker> {
     widget.onChanged(newColor);
   }
 
+  void _updateColorFromPosition(Offset localPosition, double width, double height) {
+    setState(() {
+      s = (localPosition.dx / width).clamp(0.0, 1.0);
+      v = (1.0 - (localPosition.dy / height)).clamp(0.0, 1.0);
+      _onHSVChanged();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -1732,60 +1781,70 @@ class _AdvancedColorPickerState extends State<_AdvancedColorPicker> {
             final width = constraints.maxWidth;
             const height = 150.0;
 
-            return GestureDetector(
-              onPanUpdate: (details) {
-                final RenderBox box = context.findRenderObject() as RenderBox;
-                final Offset localOffset =
-                    box.globalToLocal(details.globalPosition);
-                setState(() {
-                  s = (localOffset.dx / width).clamp(0.0, 1.0);
-                  v = (1.0 - (localOffset.dy / height)).clamp(0.0, 1.0);
-                  _onHSVChanged();
-                });
-              },
-              child: Container(
-                height: height,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  color: HSVColor.fromAHSV(1.0, h, 1.0, 1.0).toColor(),
-                ),
+            return MouseRegion(
+              cursor: SystemMouseCursors.click,
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onPanStart: (details) {
+                  setState(() => _isInteracting = true);
+                  _updateColorFromPosition(details.localPosition, width, height);
+                },
+                onPanUpdate: (details) {
+                  _updateColorFromPosition(details.localPosition, width, height);
+                },
+                onPanEnd: (_) => setState(() => _isInteracting = false),
+                onPanCancel: () => setState(() => _isInteracting = false),
+                onTapDown: (details) {
+                  setState(() => _isInteracting = true);
+                  _updateColorFromPosition(details.localPosition, width, height);
+                },
+                onTapUp: (_) => setState(() => _isInteracting = false),
+                onTapCancel: () => setState(() => _isInteracting = false),
                 child: Container(
+                  height: height,
+                  width: double.infinity,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(12),
-                    gradient: const LinearGradient(
-                      begin: Alignment.centerLeft,
-                      end: Alignment.centerRight,
-                      colors: [Colors.white, Colors.transparent],
-                    ),
+                    color: HSVColor.fromAHSV(1.0, h, 1.0, 1.0).toColor(),
                   ),
                   child: Container(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(12),
                       gradient: const LinearGradient(
-                        begin: Alignment.bottomCenter,
-                        end: Alignment.topCenter,
-                        colors: [Colors.black, Colors.transparent],
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                        colors: [Colors.white, Colors.transparent],
                       ),
                     ),
-                    child: Stack(
-                      children: [
-                        Positioned(
-                          left: s * width - 8,
-                          top: (1.0 - v) * height - 8,
-                          child: Container(
-                            width: 16,
-                            height: 16,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              border: Border.all(color: Colors.white, width: 2),
-                              boxShadow: const [
-                                BoxShadow(blurRadius: 4, color: Colors.black26)
-                              ],
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        gradient: const LinearGradient(
+                          begin: Alignment.bottomCenter,
+                          end: Alignment.topCenter,
+                          colors: [Colors.black, Colors.transparent],
+                        ),
+                      ),
+                      child: Stack(
+                        children: [
+                          if (_isInteracting)
+                            Positioned(
+                            left: s * width - 8,
+                            top: (1.0 - v) * height - 8,
+                            child: Container(
+                              width: 16,
+                              height: 16,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(color: Colors.white, width: 2),
+                                boxShadow: const [
+                                  BoxShadow(blurRadius: 4, color: Colors.black26)
+                                ],
+                              ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -1812,25 +1871,28 @@ class _AdvancedColorPickerState extends State<_AdvancedColorPicker> {
               ],
             ),
           ),
-          child: SliderTheme(
-            data: SliderTheme.of(context).copyWith(
-              trackHeight: 12,
-              activeTrackColor: Colors.transparent,
-              inactiveTrackColor: Colors.transparent,
-              thumbShape: const RoundSliderThumbShape(
-                  enabledThumbRadius: 8, elevation: 2),
-              overlayShape: const RoundSliderOverlayShape(overlayRadius: 0),
-            ),
-            child: Slider(
-              value: h,
-              min: 0,
-              max: 360,
-              onChanged: (val) {
-                setState(() {
-                  h = val;
-                  _onHSVChanged();
-                });
-              },
+          child: MouseRegion(
+            cursor: SystemMouseCursors.click,
+            child: SliderTheme(
+              data: SliderTheme.of(context).copyWith(
+                trackHeight: 12,
+                activeTrackColor: Colors.transparent,
+                inactiveTrackColor: Colors.transparent,
+                thumbShape: const RoundSliderThumbShape(
+                    enabledThumbRadius: 8, elevation: 2),
+                overlayShape: const RoundSliderOverlayShape(overlayRadius: 0),
+              ),
+              child: Slider(
+                value: h,
+                min: 0,
+                max: 360,
+                onChanged: (val) {
+                  setState(() {
+                    h = val;
+                    _onHSVChanged();
+                  });
+                },
+              ),
             ),
           ),
         ),

@@ -29,7 +29,7 @@ class NetBankingLoginPage extends StatelessWidget {
   }
 }''',
 
-    'LandingFormOrganism': r'''import 'package:flutter/material.dart' hide Text;
+    'Landing Form Organism': r'''import 'package:flutter/material.dart' hide Text;
 import '../atoms/text_field.dart' as dk;
 import '../atoms/glass_card.dart' as dk;
 import '../atoms/login_button.dart' as dk;
@@ -219,7 +219,7 @@ class LandingFormOrganism extends StatelessWidget {
   }
 }''',
 
-    'LeftInfoSection': r'''import 'package:flutter/material.dart' hide Text;
+    'Left Info Section': r'''import 'package:flutter/material.dart' hide Text;
 import '../atoms/button.dart' as dk;
 import '../atoms/text.dart' as dk;
 import '../../core/tokens/colors.dart';
@@ -333,7 +333,7 @@ class LeftInfoSection extends StatelessWidget {
   }
 }''',
 
-    'RightLoginContainer': r'''import 'package:flutter/material.dart';
+    'Right Login Container': r'''import 'package:flutter/material.dart';
 import '../../core/tokens/spacing.dart';
 import 'landing_form.dart';
 
@@ -383,7 +383,7 @@ class RightLoginContainer extends StatelessWidget {
   }
 }''',
 
-    'QrLogin': r'''import 'dart:ui';
+    'QR Login': r'''import 'dart:ui';
 import 'package:flutter/material.dart' hide Text;
 import '../atoms/text.dart' as dk;
 import '../atoms/image_atom.dart';
@@ -564,7 +564,7 @@ class QrLogin extends StatelessWidget {
   }
 }''',
 
-    'DigicartSecurity': r'''import 'package:flutter/material.dart' hide Text;
+    'Digicart Security': r'''import 'package:flutter/material.dart' hide Text;
 import '../atoms/text.dart' as dk;
 import '../atoms/glass_card.dart' as dk;
 import '../atoms/image_atom.dart';
@@ -668,7 +668,7 @@ class _DigicartSecurityState extends State<DigicartSecurity> {
   }
 }''',
 
-    'LabeledInputField': r'''import 'package:flutter/material.dart' hide Text;
+    'Labeled Input Field': r'''import 'package:flutter/material.dart' hide Text;
 import '../atoms/text_field.dart' as dk;
 import '../atoms/text.dart' as dk;
 import '../../core/tokens/typography.dart';
@@ -707,7 +707,7 @@ class LabeledInputField extends StatelessWidget {
   }
 }''',
 
-    'PasswordField': r'''import 'package:flutter/material.dart' hide Text;
+    'Password Field': r'''import 'package:flutter/material.dart' hide Text;
 import '../atoms/text_field.dart' as dk;
 import '../atoms/text.dart' as dk;
 import '../../core/tokens/typography.dart';
@@ -782,6 +782,7 @@ class Dropdown extends StatefulWidget {
 
 class _DropdownState extends State<Dropdown> {
   String? _selectedValue;
+  final MenuController _menuController = MenuController();
 
   @override
   void initState() {
@@ -806,7 +807,7 @@ class _DropdownState extends State<Dropdown> {
         alignment: Alignment.centerLeft,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
+          mainAxisSize: MainAxisSize.AxisSize.min,
           children: [
             if (widget.label != null) ...[
               dk.Text(
@@ -817,49 +818,89 @@ class _DropdownState extends State<Dropdown> {
               ),
               const SizedBox(height: 8),
             ],
-            Container(
-              width: widget.width,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.black12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
+            MenuAnchor(
+              controller: _menuController,
+              alignmentOffset: const Offset(0, 4),
+              style: MenuStyle(
+                backgroundColor: WidgetStateProperty.all(Colors.white),
+                surfaceTintColor: WidgetStateProperty.all(Colors.white),
+                elevation: WidgetStateProperty.all(8),
+                padding: WidgetStateProperty.all(EdgeInsets.zero),
+                shape: WidgetStateProperty.all(
+                  RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    side: const BorderSide(color: Colors.black12),
                   ),
-                ],
+                ),
+                fixedSize: WidgetStateProperty.all(Size.fromWidth(widget.width)),
               ),
-              child: DropdownButtonHideUnderline(
-                child: DropdownButton<String>(
-                  value: widget.items.contains(_selectedValue) ? _selectedValue : null,
-                  hint: dk.Text(text: widget.hint, color: Colors.black38, fontSize: 14),
-                  isExpanded: true,
-                  icon: Icon(Icons.keyboard_arrow_down, color: widget.activeColor),
-                  borderRadius: BorderRadius.circular(12),
-                  dropdownColor: Colors.white.withValues(alpha: 0.9), // Subtle glass effect
-                  items: widget.items.map((String item) {
-                    return DropdownMenuItem<String>(
-                      value: item,
-                      child: dk.Text(
-                        text: item,
-                        color: Colors.black87,
-                        fontSize: 15,
-                      ),
-                    );
-                  }).toList(),
-                  onChanged: (String? newValue) {
+              menuChildren: widget.items.map((item) {
+                return MenuItemButton(
+                  onPressed: () {
                     setState(() {
-                      _selectedValue = newValue;
+                      _selectedValue = item;
                     });
-                    if (widget.onChanged != null) {
-                      widget.onChanged!(newValue);
+                    widget.onChanged?.call(item);
+                  },
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 2),
+                    child: dk.Text(
+                      text: item,
+                      color: Colors.black87,
+                      fontSize: 15,
+                    ),
+                  ),
+                );
+              }).toList(),
+              builder: (context, controller, child) {
+                return GestureDetector(
+                  onTap: () {
+                    if (controller.isOpen) {
+                      controller.close();
+                    } else {
+                      controller.open();
                     }
                   },
-                ),
-              ),
+                  child: Container(
+                    width: widget.width,
+                    height: 50,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: controller.isOpen ? widget.activeColor : Colors.black12,
+                        width: controller.isOpen ? 1.5 : 1,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.05),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: dk.Text(
+                            text: _selectedValue ?? widget.hint,
+                            color: _selectedValue == null ? Colors.black38 : Colors.black87,
+                            fontSize: 14,
+                          ),
+                        ),
+                        Icon(
+                          controller.isOpen 
+                              ? Icons.keyboard_arrow_up 
+                              : Icons.keyboard_arrow_down, 
+                          color: widget.activeColor
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
             ),
           ],
         ),
@@ -868,7 +909,7 @@ class _DropdownState extends State<Dropdown> {
   }
 }''',
 
-    'GlassCard': r'''import 'dart:ui';
+    'Glass Card': r'''import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../core/tokens/radius.dart';
 import '../../core/tokens/spacing.dart';
@@ -965,7 +1006,7 @@ class Text extends StatelessWidget {
   }
 }''',
 
-    'TextField': r'''import 'package:flutter/material.dart' hide TextField, Text;
+    'Text Field': r'''import 'package:flutter/material.dart' hide TextField, Text;
 import 'package:flutter/material.dart' as m show TextField, TextEditingController;
 import 'package:flutter/services.dart';
 import 'text.dart' as dk;
@@ -1434,7 +1475,7 @@ class _CheckboxState extends State<Checkbox> with SingleTickerProviderStateMixin
   }
 }''',
 
-    'TextButton': r'''import 'package:flutter/material.dart' hide TextButton;
+    'Text Button': r'''import 'package:flutter/material.dart' hide TextButton;
 import 'package:flutter/material.dart' as m show Text;
 
 class TextButton extends StatefulWidget {
@@ -1566,7 +1607,7 @@ class dkImage extends StatelessWidget {
   }
 }''',
 
-    'RadioButton': r'''import 'package:flutter/material.dart';
+    'Radio Button': r'''import 'package:flutter/material.dart';
 
 class RadioButton extends StatelessWidget {
   final bool value;
@@ -1656,7 +1697,7 @@ class RadioButton extends StatelessWidget {
   }
 }''',
 
-    'ToggleSwitch': r'''import 'package:flutter/material.dart';
+    'Toggle Switch': r'''import 'package:flutter/material.dart';
 
 class ToggleSwitch extends StatefulWidget {
   final bool value;
