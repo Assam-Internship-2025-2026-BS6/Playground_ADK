@@ -1592,7 +1592,7 @@ class dkImage extends StatelessWidget {
                   imageFilter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                   child: ColorFiltered(
                     colorFilter: ColorFilter.mode(
-                      Colors.black.withOpacity(0.2),
+                      Colors.black.withValues(alpha: 0.2),
                       BlendMode.srcIn,
                     ),
                     child: imageWidget,

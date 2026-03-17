@@ -1,0 +1,10 @@
+Analyzing playground...                                         
+
+   info - Use 'const' with the constructor to improve performance - lib\playground_screen.dart:351:19 - prefer_const_constructors
+   info - Use 'const' literals as arguments to constructors of '@immutable' classes - lib\playground_screen.dart:352:25 - prefer_const_literals_to_create_immutables
+   info - Use 'const' with the constructor to improve performance - lib\playground_screen.dart:569:19 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\playground_screen.dart:571:28 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\playground_screen.dart:830:17 - prefer_const_constructors
+   info - String literals shouldn't be concatenated by the '+' operator - lib\playground_screen.dart:1293:32 - prefer_adjacent_string_concatenation
+   info - Unnecessary braces in a string interpolation - lib\playground_screen.dart:1485:28 - unnecessary_brace_in_string_interps
+

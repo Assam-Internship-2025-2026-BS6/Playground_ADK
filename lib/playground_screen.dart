@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:designkit/components/atoms/text.dart' as dk;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/services.dart';
-// ignore: avoid_web_libraries_in_flutter
-import 'dart:html' as html;
+import 'utils/web_utils.dart';
 import 'component_registry.dart';
 import 'component_metadata.dart';
 import 'package:designkit/components/atoms/glass_container.dart';
@@ -56,8 +54,8 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
     }
 
     if (kIsWeb) {
-      html.document.onFullscreenChange.listen((event) {
-        if (html.document.fullscreenElement == null && mounted) {
+      WebUtils.onFullscreenChange.listen((event) {
+        if (!WebUtils.isFullscreen && mounted) {
           setState(() {
             _isFullScreen = false;
           });
@@ -74,10 +72,10 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
 
     if (kIsWeb) {
       if (value) {
-        html.document.documentElement?.requestFullscreen();
+        WebUtils.requestFullscreen();
       } else {
-        if (html.document.fullscreenElement != null) {
-          html.document.exitFullscreen();
+        if (WebUtils.isFullscreen) {
+          WebUtils.exitFullscreen();
         }
       }
     }
@@ -148,10 +146,10 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
             decoration: BoxDecoration(
               border: Border(
                 left: BorderSide(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withValues(alpha: 0.05),
                     width: _isFullScreen ? 0 : 1),
                 right: BorderSide(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withValues(alpha: 0.05),
                     width: _isFullScreen ? 0 : 1),
               ),
             ),
@@ -216,9 +214,8 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final screenWidth = constraints.maxWidth;
-        final physicalWidth = kIsWeb ? (html.window.screen?.width ?? screenWidth * 2) : screenWidth * 2;
+        final physicalWidth = kIsWeb ? (WebUtils.screenWidth ?? screenWidth * 2) : screenWidth * 2;
         final isMobileLayout = screenWidth < (physicalWidth * 0.5);
-        final isTabletLayout = screenWidth >= (physicalWidth * 0.5) && screenWidth < 1000;
 
         // 1. Mobile Layout (< 50% of screen)
         if (isMobileLayout) {
@@ -295,7 +292,7 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
           width: isHovering ? 12 : 6,
           decoration: BoxDecoration(
             color: isHovering
-                ? const Color(0xFF1E1E4C).withOpacity(0.1)
+                ? const Color(0xFF1E1E4C).withValues(alpha: 0.1)
                 : Colors.transparent,
           ),
           child: Stack(
@@ -305,8 +302,8 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
               Container(
                 width: 2,
                 color: isHovering
-                    ? const Color(0xFF1E1E4C).withOpacity(0.3)
-                    : Colors.black.withOpacity(0.05),
+                    ? const Color(0xFF1E1E4C).withValues(alpha: 0.3)
+                    : Colors.black.withValues(alpha: 0.05),
               ),
               // Drag Icon (Dots)
               if (isHovering)
@@ -351,11 +348,11 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
               color: Colors.white24, indent: 18, endIndent: 18),
           const SizedBox(width: 40),
           RichText(
-            text: TextSpan(
+            text: const TextSpan(
               children: [
                 TextSpan(
                   text: "Design System Playground  ",
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: Color.fromARGB(255, 255, 255, 255),
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
@@ -363,7 +360,7 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
                 ),
                 // TextSpan(
                 //   text: "NETBANKING - GLASS - ATOMIC",
-                //   style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 14),
+                //   style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontSize: 14),
                 // ),
               ],
             ),
@@ -383,11 +380,11 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Padding(
-              padding: const EdgeInsets.only(left: 8.0, bottom: 8.0),
+            const Padding(
+              padding: EdgeInsets.only(left: 8.0, bottom: 8.0),
               child: Text(
                 "COMPONENTS",
-                style: const TextStyle(
+                style: TextStyle(
                   color: Colors.black54,
                   fontWeight: FontWeight.w700,
                   fontSize: 12,
@@ -403,7 +400,7 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withValues(alpha: 0.05),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -448,7 +445,7 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
+                      color: Colors.black.withValues(alpha: 0.1),
                       blurRadius: 15,
                       offset: const Offset(0, 8),
                     ),
@@ -569,12 +566,12 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
             secondChild: Column(
               children: [
                 if (items.isEmpty && !isSearching)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  const Padding(
+                    padding: EdgeInsets.fromLTRB(16, 0, 16, 16),
                     child: Text(
                       "No components",
                       style:
-                          const TextStyle(color: Colors.black38, fontSize: 12),
+                          TextStyle(color: Colors.black38, fontSize: 12),
                     ),
                   )
                 else
@@ -722,7 +719,7 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
                                     borderRadius: BorderRadius.circular(12),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: Colors.black.withOpacity(0.1),
+                                        color: Colors.black.withValues(alpha: 0.1),
                                         blurRadius: 30,
                                         offset: const Offset(0, 15),
                                       ),
@@ -804,7 +801,7 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
-          color: isActive ? Colors.white.withOpacity(0.3) : Colors.transparent,
+          color: isActive ? Colors.white.withValues(alpha: 0.3) : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Icon(
@@ -830,9 +827,9 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
+                const Text(
                   "PROPERTIES",
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: Colors.black87,
                     fontWeight: FontWeight.w900,
                     fontSize: 16,
@@ -1161,7 +1158,7 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
                         fontWeight: FontWeight.bold),
                     overflow: TextOverflow.ellipsis)),
             Text(
-              '#${currentColor.value.toRadixString(16).substring(2).toUpperCase()}',
+              '#${currentColor.toARGB32().toRadixString(16).substring(2).toUpperCase()}',
               style: const TextStyle(
                   color: Colors.black54,
                   fontSize: 12,
@@ -1203,7 +1200,7 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
   }
 
   Widget _colorPaletteSwatch(Color paletteColor, String key) {
-    final bool isSelected = (currentProps[key] as Color?)?.value == paletteColor.value;
+    final bool isSelected = (currentProps[key] as Color?)?.toARGB32() == paletteColor.toARGB32();
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       child: GestureDetector(
@@ -1222,7 +1219,7 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
             boxShadow: [
               if (isSelected)
                 BoxShadow(
-                  color: paletteColor.withOpacity(0.4),
+                  color: paletteColor.withValues(alpha: 0.4),
                   blurRadius: 8,
                   spreadRadius: 2,
                 ),
@@ -1284,14 +1281,17 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
     currentProps.forEach((key, value) {
       if (!key.startsWith('_')) {
         String valStr = value.toString();
-        if (value is String) valStr = "'$value'";
-        else if (value is Color) valStr = "const Color(0x${value.value.toRadixString(16).padLeft(8, '0').toUpperCase()})";
-        else if (value is Offset) valStr = "const Offset(${value.dx}, ${value.dy})";
+        if (value is String) {
+          valStr = "'$value'";
+        } else if (value is Color) {
+          valStr = "const Color(0x${value.toARGB32().toRadixString(16).padLeft(8, '0').toUpperCase()})";
+        } else if (value is Offset) {
+          valStr = "const Offset(${value.dx}, ${value.dy})";
+        }
         // Attempt to replace constructor defaults: this.property = defaultValue,
         implementationCode = implementationCode.replaceAllMapped(
-          RegExp('this\\.' + key + r'\s*=\s*[^,)]+([,)])'),
-          (match) => 'this.$key = $valStr${match.group(1)}'
-        );
+            RegExp('this.$key' r'\s*=\s*[^,)]+([,)])'),
+            (match) => 'this.$key = $valStr${match.group(1)}');
       }
     });
 
@@ -1342,7 +1342,7 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.black.withOpacity(0.05)),
+                border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
               ),
               child: TabBarView(
                 children: [
@@ -1482,14 +1482,14 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
         if (enumPrefix.startsWith('Custom') && enumPrefix.length > 6) {
           enumPrefix = enumPrefix.substring(6);
         }
-        String enumType = '${enumPrefix}${_formatName(key)}Variant';
+        String enumType = '$enumPrefix${_formatName(key)}Variant';
         buffer.writeln('$enumType.${value.toLowerCase()},');
       } 
       else if (value is String) {
         buffer.writeln("'$value',");
       } 
       else if (value is Color) {
-        String colorHex = value.value.toRadixString(16).toUpperCase().padLeft(8, '0');
+        String colorHex = value.toARGB32().toRadixString(16).toUpperCase().padLeft(8, '0');
         buffer.writeln('const Color(0x$colorHex),');
       } 
       else if (value is FontWeight) {
@@ -1910,12 +1910,12 @@ class _AdvancedColorPickerState extends State<_AdvancedColorPicker> {
                       style: TextStyle(fontSize: 10, color: Colors.black54)),
                   const SizedBox(height: 4),
                   TextField(
-                    key: ValueKey('hex_${widget.color.value}'),
+                    key: ValueKey('hex_${widget.color.toARGB32()}'),
                     textAlign: TextAlign.center,
                     style: const TextStyle(
                         fontSize: 12, fontWeight: FontWeight.bold),
                     controller: TextEditingController(
-                      text: widget.color.value
+                      text: widget.color.toARGB32()
                           .toRadixString(16)
                           .substring(2)
                           .toUpperCase(),
@@ -1933,7 +1933,7 @@ class _AdvancedColorPickerState extends State<_AdvancedColorPicker> {
                       if (hex.length == 6) {
                         final parsed = int.tryParse(hex, radix: 16);
                         if (parsed != null) {
-                          widget.onChanged(Color(parsed).withOpacity(1.0));
+                          widget.onChanged(Color(parsed).withValues(alpha: 1.0));
                         }
                       }
                     },
@@ -1947,15 +1947,15 @@ class _AdvancedColorPickerState extends State<_AdvancedColorPicker> {
               flex: 3,
               child: Row(
                 children: [
-                  _colorComponentInput("R", widget.color.red, (val) {
+                  _colorComponentInput("R", (widget.color.r * 255).round().clamp(0, 255), (val) {
                     widget.onChanged(widget.color.withRed(val));
                   }),
                   const SizedBox(width: 6),
-                  _colorComponentInput("G", widget.color.green, (val) {
+                  _colorComponentInput("G", (widget.color.g * 255).round().clamp(0, 255), (val) {
                     widget.onChanged(widget.color.withGreen(val));
                   }),
                   const SizedBox(width: 6),
-                  _colorComponentInput("B", widget.color.blue, (val) {
+                  _colorComponentInput("B", (widget.color.b * 255).round().clamp(0, 255), (val) {
                     widget.onChanged(widget.color.withBlue(val));
                   }),
                 ],

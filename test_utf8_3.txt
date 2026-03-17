@@ -1,0 +1,8 @@
+00:00 +0: loading C:/Users/Prastab/OneDrive/Desktop/Flutter_DesignKit/playground/test/widget_test.dart
+00:00 +0 -1: loading C:/Users/Prastab/OneDrive/Desktop/Flutter_DesignKit/playground/test/widget_test.dart [E]
+  Failed to load "C:/Users/Prastab/OneDrive/Desktop/Flutter_DesignKit/playground/test/widget_test.dart":
+  Compilation failed for testPath=C:/Users/Prastab/OneDrive/Desktop/Flutter_DesignKit/playground/test/widget_test.dart: test/widget_test.dart:7:38: Error: Couldn't find constructor 'Size'.
+      tester.view.physicalSize = const Size(1920, 1080);
+                                       ^^^^
+  .
+00:00 +0 -1: Some tests failed.
