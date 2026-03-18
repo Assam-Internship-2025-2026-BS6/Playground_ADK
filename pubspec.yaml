@@ -12,7 +12,7 @@ dependencies:
 
   # DesignKit dependency pulled directly from GitHub
   designkit:
-    path: ../designkit_hdfc_web/designkit
+    path: ../designkit
 
   cupertino_icons: ^1.0.8
 
