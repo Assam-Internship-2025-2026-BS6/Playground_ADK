@@ -214,8 +214,7 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final screenWidth = constraints.maxWidth;
-        final physicalWidth = kIsWeb ? (WebUtils.screenWidth ?? screenWidth * 2) : screenWidth * 2;
-        final isMobileLayout = screenWidth < (physicalWidth * 0.5);
+        final isMobileLayout = screenWidth < 800;
 
         // 1. Mobile Layout (< 50% of screen)
         if (isMobileLayout) {
@@ -485,6 +484,9 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
                                     _searchQuery = "";
                                     _searchController.clear();
                                     _expandedCategories[c.category] = true;
+                                    if (_scaffoldKey.currentState?.isDrawerOpen == true) {
+                                      _scaffoldKey.currentState?.closeDrawer();
+                                    }
                                   });
                                 },
                               ))
@@ -608,6 +610,9 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
                             _ensureOffsetProps();
                             _updateControllers();
                             _refreshCounter++;
+                            if (_scaffoldKey.currentState?.isDrawerOpen == true) {
+                              _scaffoldKey.currentState?.closeDrawer();
+                            }
                           });
                         },
                       ),
