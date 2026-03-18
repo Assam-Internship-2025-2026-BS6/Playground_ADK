@@ -697,7 +697,7 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
                           child: _isFullScreen
                               ? Container(
                                   width: 1440,
-                                  height: 900,
+                                  height: 1024,
                                   color:
                                       const Color.fromARGB(255, 247, 247, 251),
                                   child: selectedComponent!.name ==
@@ -729,7 +729,7 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
                                     borderRadius: BorderRadius.circular(12),
                                     child: SizedBox(
                                       width: 1440,
-                                      height: 900,
+                                      height: 1024,
                                       child: Center(
                                         key: ValueKey(_refreshCounter),
                                         child: Padding(
