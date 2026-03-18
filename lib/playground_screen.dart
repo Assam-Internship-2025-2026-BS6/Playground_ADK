@@ -225,7 +225,7 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
               backgroundColor: const Color(0xFF1E1E4C),
               elevation: 0,
               leading: IconButton(
-                icon: const Icon(Icons.settings, color: Colors.white),
+                icon: const Icon(Icons.menu, color: Colors.white),
                 onPressed: () => _scaffoldKey.currentState?.openDrawer(),
                 tooltip: 'Components',
               ),
