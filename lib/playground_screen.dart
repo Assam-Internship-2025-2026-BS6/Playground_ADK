@@ -496,10 +496,10 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
                 ),
               ),
             const SizedBox(height: 24),
-            _categoryGlassContainer("Pages"),
             _categoryGlassContainer("Atoms"),
             _categoryGlassContainer("Molecules"),
             _categoryGlassContainer("Organisms"),
+            _categoryGlassContainer("Pages"),
           ],
         ),
       ),
@@ -742,7 +742,12 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
                                           child: Center(
                                             child: Transform.scale(
                                               scale: _getComponentScale(),
-                                              child: _renderComponent(isFullScreen: false),
+                                              child: ConstrainedBox(
+                                                constraints: BoxConstraints(
+                                                  maxWidth: 1400 / _getComponentScale(),
+                                                ),
+                                                child: _renderComponent(isFullScreen: false),
+                                              ),
                                             ),
                                           ),
                                         ),

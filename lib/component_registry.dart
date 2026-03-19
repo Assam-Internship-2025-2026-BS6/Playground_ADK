@@ -361,16 +361,29 @@ final List<ComponentMetadata> componentRegistry = [
     category: 'Atoms',
     defaultProps: {
       'label': 'Keep me logged in',
+      'size': 'Medium',
       'disabled': false,
       'activeColor': const Color(0xFF1E1E4C),
       'labelColor': const Color(0xFF1E1E4C),
       'xOffset': 0.0,
       'yOffset': 0.0,
     },
+    options: {
+      'size': ['Small', 'Medium', 'Large'],
+    },
     builder: (Map<String, dynamic> props, {bool isFullScreen = false, VoidCallback? onUpdate}) {
+      final sizeOpt = props['size'] ?? 'Medium';
+      double componentSize = 1.0;
+      if (sizeOpt == 'Small') {
+        componentSize = 0.8;
+      } else if (sizeOpt == 'Large') {
+        componentSize = 1.2;
+      }
+
       return dk.Checkbox(
         value: false, // Internal state will take over after first render
         label: props['label'],
+        size: componentSize,
         disabled: props['disabled'] ?? false,
         activeColor: props['activeColor'] ?? const Color(0xFF1E1E4C),
         labelColor: props['labelColor'] ?? const Color(0xFF1E1E4C),
@@ -388,16 +401,29 @@ final List<ComponentMetadata> componentRegistry = [
     category: 'Atoms',
     defaultProps: {
       'text': 'Click Me',
-      'fontSize': 40.0,
+      'size': 'Medium',
       'isClickable': true,
       'enableHover': true,
       'xOffset': 0.0,
       'yOffset': 0.0,
     },
+    options: {
+      'size': ['Small', 'Medium', 'Large'],
+    },
     builder: (Map<String, dynamic> props, {bool isFullScreen = false, VoidCallback? onUpdate}) {
+      final size = props['size'] ?? 'Medium';
+      double fontSize = 40.0;
+      if (size == 'Small') {
+        fontSize = 24.0;
+      } else if (size == 'Medium') {
+        fontSize = 40.0;
+      } else if (size == 'Large') {
+        fontSize = 64.0;
+      }
+
       return dk.TextButton(
         text: props['text'] ?? 'Click Me',
-        fontSize: (props['fontSize'] as num?)?.toDouble() ?? 24.0,
+        fontSize: fontSize,
         isClickable: props['isClickable'] ?? true,
         enableHover: props['enableHover'] ?? true,
         offset: Offset(
@@ -466,19 +492,30 @@ final List<ComponentMetadata> componentRegistry = [
     defaultProps: {
       'label': 'Radio Option',
       'value': true,
-      'fontSize': 40.0,
+      'size': 'Medium',
       'activeColor': const Color(0xFF1E1E4C),
       'labelColor': Colors.black87,
       'xOffset': 0.0,
       'yOffset': 0.0,
     },
+    options: {
+      'size': ['Small', 'Medium', 'Large'],
+    },
     builder: (Map<String, dynamic> props, {bool isFullScreen = false, VoidCallback? onUpdate}) {
+      final sizeOpt = props['size'] ?? 'Medium';
+      double fontSize = 40.0;
+      if (sizeOpt == 'Small') {
+        fontSize = 28.0;
+      } else if (sizeOpt == 'Large') {
+        fontSize = 50.0;
+      }
+
       return StatefulBuilder(
         builder: (context, setState) {
           return dk.RadioButton(
             label: props['label'] ?? 'Radio Option',
             value: props['value'] ?? false,
-            fontSize: (props['fontSize'] as num?)?.toDouble() ?? 28.0,
+            fontSize: fontSize,
             activeColor: props['activeColor'] ?? const Color(0xFF1E1E4C),
             labelColor: props['labelColor'] ?? Colors.black87,
             offset: Offset(
@@ -503,19 +540,31 @@ final List<ComponentMetadata> componentRegistry = [
     defaultProps: {
       'label': 'Enable Notifications',
       'value': false,
-      'fontSize': 30.0,
+      'size': 'Medium',
       'activeColor': const Color(0xFF1E1E4C),
       'labelColor': Colors.black87,
       'xOffset': 0.0,
       'yOffset': 0.0,
     },
+    options: {
+      'size': ['Small', 'Medium', 'Large'],
+    },
     builder: (Map<String, dynamic> props, {bool isFullScreen = false, VoidCallback? onUpdate}) {
+      final sizeOpt = props['size'] ?? 'Medium';
+      double componentSize = 1.0;
+      if (sizeOpt == 'Small') {
+        componentSize = 0.7;
+      } else if (sizeOpt == 'Large') {
+        componentSize = 1.4;
+      }
+
       return StatefulBuilder(
         builder: (context, setState) {
           return dk.ToggleSwitch(
             label: props['label'],
             value: props['value'] ?? false,
-            fontSize: (props['fontSize'] as num?)?.toDouble() ?? 30.0,
+            size: componentSize,
+            fontSize: 30.0,
             activeColor: props['activeColor'] ?? const Color(0xFF1E1E4C),
             labelColor: props['labelColor'] ?? Colors.black87,
             offset: Offset(
