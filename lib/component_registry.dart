@@ -243,6 +243,8 @@ final List<ComponentMetadata> componentRegistry = [
       'size': 'Medium',
       'color': Colors.black,
       'fontWeight': FontWeight.w700,
+      'xOffset': 0.0,
+      'yOffset': 0.0,
 },
     options: {
       'size': ['Small', 'Medium', 'Large'],
@@ -282,6 +284,8 @@ final List<ComponentMetadata> componentRegistry = [
       'color': Colors.black,
       'fontWeight': FontWeight.w700,
       'disabled': false,
+      'xOffset': 0.0,
+      'yOffset': 0.0,
 },
     builder: (Map<String, dynamic> props, {bool isFullScreen = false, VoidCallback? onUpdate}) {
       return dk.TextField(
@@ -309,6 +313,8 @@ final List<ComponentMetadata> componentRegistry = [
       'disabled': false,
       'color': const Color.fromARGB(255, 41, 84, 255),
       'opacity': 0.8,
+      'xOffset': 0.0,
+      'yOffset': 0.0,
 },
     options: {
       'size': ['Small', 'Medium', 'Large'],
@@ -353,6 +359,8 @@ final List<ComponentMetadata> componentRegistry = [
       'disabled': false,
       'activeColor': const Color(0xFF1E1E4C),
       'labelColor': const Color(0xFF1E1E4C),
+      'xOffset': 0.0,
+      'yOffset': 0.0,
 },
     options: {
       'size': ['Small', 'Medium', 'Large'],
@@ -390,6 +398,8 @@ final List<ComponentMetadata> componentRegistry = [
       'size': 'Medium',
       'isClickable': true,
       'enableHover': true,
+      'xOffset': 0.0,
+      'yOffset': 0.0,
 },
     options: {
       'size': ['Small', 'Medium', 'Large'],
@@ -424,7 +434,9 @@ final List<ComponentMetadata> componentRegistry = [
     defaultProps: {
       'imagePath': 'assets/hdfc_logo.png',
       'size': 'Medium',
-'showShadow': false,
+      'showShadow': false,
+      'xOffset': 0.0,
+      'yOffset': 0.0,
     },
     options: {
       'size': ['Small', 'Medium', 'Large'],
@@ -477,6 +489,8 @@ final List<ComponentMetadata> componentRegistry = [
       'size': 'Medium',
       'activeColor': const Color(0xFF1E1E4C),
       'labelColor': Colors.black87,
+      'xOffset': 0.0,
+      'yOffset': 0.0,
 },
     options: {
       'size': ['Small', 'Medium', 'Large'],
@@ -523,6 +537,8 @@ final List<ComponentMetadata> componentRegistry = [
       'size': 'Medium',
       'activeColor': const Color(0xFF1E1E4C),
       'labelColor': Colors.black87,
+      'xOffset': 0.0,
+      'yOffset': 0.0,
 },
     options: {
       'size': ['Small', 'Medium', 'Large'],

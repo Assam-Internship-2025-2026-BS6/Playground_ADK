@@ -98,7 +98,23 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
   }
 
   void _ensureOffsetProps() {
-    // Offset sliders removed.
+    if (selectedComponent == null) return;
+    
+    final targetAtoms = [
+      'Text', 
+      'Text Field', 
+      'Button', 
+      'Checkbox', 
+      'Text Button', 
+      'Image', 
+      'Radio Button', 
+      'Toggle Switch'
+    ];
+    
+    if (targetAtoms.contains(selectedComponent!.name)) {
+      if (!currentProps.containsKey('xOffset')) currentProps['xOffset'] = 0.0;
+      if (!currentProps.containsKey('yOffset')) currentProps['yOffset'] = 0.0;
+    }
   }
 
   @override
@@ -1062,7 +1078,7 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
     } else if (lowerKey.contains("height")) {
       final isOrganism = selectedComponent?.category == 'Organisms';
 
-      min = isOrganism ? 680.0 : 60.0;
+      min = isOrganism ? 680.0 : 70.0;
       max = 830.0;
       if (selectedComponent?.name == 'Glass Card') {
         max = 830.0;
@@ -1074,8 +1090,73 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
       max = 100.0;
       decimals = 0;
     } else if (lowerKey.contains("offset")) {
-      min = -280.0;
-      max = 280.0;
+      final isImage = selectedComponent?.name == 'Image';
+      final isText = selectedComponent?.name == 'Text';
+      final isButton = selectedComponent?.name == 'Button';
+      final isCheckbox = selectedComponent?.name == 'Checkbox';
+      final isTextButton = selectedComponent?.name == 'Text Button';
+      final isRadioButton = selectedComponent?.name == 'Radio Button';
+      final isToggleSwitch = selectedComponent?.name == 'Toggle Switch';
+      if (isImage) {
+        if (lowerKey.contains("xoffset")) {
+          min = -280.0;
+          max = 280.0;
+        } else if (lowerKey.contains("yoffset")) {
+          min = -350.0;
+          max = 350.0;
+        }
+      } else if (isText) {
+        if (lowerKey.contains("xoffset")) {
+          min = -600.0;
+          max = 600.0;
+        } else if (lowerKey.contains("yoffset")) {
+          min = -550.0;
+          max = 550.0;
+        }
+      } else if (isButton) {
+        if (lowerKey.contains("xoffset")) {
+          min = -750.0;
+          max = 750.0;
+        } else if (lowerKey.contains("yoffset")) {
+          min = -650.0;
+          max = 650.0;
+        }
+      } else if (isCheckbox) {
+        if (lowerKey.contains("xoffset")) {
+          min = -500.0;
+          max = 500.0;
+        } else if (lowerKey.contains("yoffset")) {
+          min = -620.0;
+          max = 620.0;
+        }
+      } else if (isTextButton) {
+        if (lowerKey.contains("xoffset")) {
+          min = -650.0;
+          max = 650.0;
+        } else if (lowerKey.contains("yoffset")) {
+          min = -590.0;
+          max = 590.0;
+        }
+      } else if (isRadioButton) {
+        if (lowerKey.contains("xoffset")) {
+          min = -770.0;
+          max = 770.0;
+        } else if (lowerKey.contains("yoffset")) {
+          min = -770.0;
+          max = 770.0;
+        }
+      } else if (isToggleSwitch) {
+        if (lowerKey.contains("xoffset")) {
+          min = -550.0;
+          max = 450.0;
+        } else if (lowerKey.contains("yoffset")) {
+          min = -620.0;
+          max = 620.0;
+        }
+      } else {
+        min = -500.0;
+        max = 500.0;
+      }
     } else if (lowerKey.contains("scale") || lowerKey.contains("size")) {
       min = 0.0;
       max = 10.0;

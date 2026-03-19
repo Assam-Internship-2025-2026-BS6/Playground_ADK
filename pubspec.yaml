@@ -1,6 +1,6 @@
 name: playground
 description: "Design Kit Playground"
-publish_to: 'none'
+publish_to: "none"
 version: 1.0.0+1
 
 environment:
@@ -12,7 +12,7 @@ dependencies:
 
   # DesignKit dependency pulled directly from GitHub
   designkit:
-    path: ../Flutter-DesignKit-/designkit
+    path: ../designkit
 
   cupertino_icons: ^1.0.8
 
