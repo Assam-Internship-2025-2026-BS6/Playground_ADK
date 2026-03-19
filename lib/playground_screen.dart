@@ -214,9 +214,9 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final screenWidth = constraints.maxWidth;
-        final isMobileLayout = screenWidth < 800;
+        final isMobileLayout = screenWidth <= 1024;
 
-        // 1. Mobile Layout (< 50% of screen)
+        // 1. Mobile/Tablet Layout (Drawers for sidebar & properties)
         if (isMobileLayout) {
           return Scaffold(
             key: _scaffoldKey,
@@ -253,7 +253,7 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
           );
         }
 
-        // 2 & 3. Tablet and Desktop Layout
+        // 2 & 3. Desktop Layout
         return Scaffold(
           body: Container(
             color: const Color(0xFFF0F9FF),
