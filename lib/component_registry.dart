@@ -90,9 +90,7 @@ final List<ComponentMetadata> componentRegistry = [
       'width': 484.0,
       'height': 120.0,
       'opacity': 0.2,
-      'xOffset': 0.0,
-      'yOffset': 0.0,
-    },
+},
     builder: (Map<String, dynamic> props, {bool isFullScreen = false, VoidCallback? onUpdate}) {
       return QrLogin(
         title: props['title'] ?? 'Click to scan QR and login',
@@ -115,9 +113,7 @@ final List<ComponentMetadata> componentRegistry = [
       'width': 484.0,
       'height': 120.0,
       'opacity': 0.2,
-      'xOffset': 0.0,
-      'yOffset': 0.0,
-    },
+},
     builder: (Map<String, dynamic> props, {bool isFullScreen = false, VoidCallback? onUpdate}) {
       return DigicartSecurity(
         title: props['title'] ?? 'Goodbye, Secure Text & Image',
@@ -137,9 +133,7 @@ final List<ComponentMetadata> componentRegistry = [
       'label': 'Customer ID/ User ID',
       'hintText': 'Enter your ID',
       'width': 700.0,
-      'xOffset': 0.0,
-      'yOffset': 0.0,
-    },
+},
     builder: (Map<String, dynamic> props, {bool isFullScreen = false, VoidCallback? onUpdate}) {
       return LabeledInputField(
         label: props['label'] ?? 'Customer ID/ User ID',
@@ -155,9 +149,7 @@ final List<ComponentMetadata> componentRegistry = [
       'label': 'Password/ PIN',
       'hintText': 'Enter password',
       'width': 700.0,
-      'xOffset': 0.0,
-      'yOffset': 0.0,
-    },
+},
     builder: (Map<String, dynamic> props, {bool isFullScreen = false, VoidCallback? onUpdate}) {
       return PasswordField(
         label: props['label'] ?? 'Password/ PIN',
@@ -179,9 +171,7 @@ final List<ComponentMetadata> componentRegistry = [
       ],
       'width': 300.0,
       'activeColor': const Color(0xFF1E1E4C),
-      'xOffset': 0.0,
-      'yOffset': 0.0,
-    },
+},
     options: {
       'value': [
         'Savings Account - 1234',
@@ -223,10 +213,12 @@ final List<ComponentMetadata> componentRegistry = [
       'height': 300.0,
       'opacity': 0.12,
       'showShadow': true,
+      'showTitle': true,
       'borderRadius': 20.0,
       'tintColor': Colors.white,
     },
     builder: (Map<String, dynamic> props, {bool isFullScreen = false, VoidCallback? onUpdate}) {
+      final bool showTitle = props['showTitle'] ?? true;
       return GlassCard(
         width: (props['width'] as num?)?.toDouble() ?? 550.0,
         height: (props['height'] as num?)?.toDouble() ?? 300.0,
@@ -234,10 +226,12 @@ final List<ComponentMetadata> componentRegistry = [
         showShadow: props['showShadow'] ?? true,
         borderRadius: (props['borderRadius'] as num?)?.toDouble() ?? 20.0,
         tintColor: props['tintColor'] ?? Colors.white,
-        child: const Center(
-          child:
-              dk.Text(text: 'Glass Card', fontSize: 20.0, color: Colors.black),
-        ),
+        child: showTitle
+            ? const Center(
+                child: dk.Text(
+                    text: 'Glass Card', fontSize: 20.0, color: Colors.black),
+              )
+            : const SizedBox(),
       );
     },
   ),
@@ -249,9 +243,7 @@ final List<ComponentMetadata> componentRegistry = [
       'size': 'Medium',
       'color': Colors.black,
       'fontWeight': FontWeight.w700,
-      'xOffset': 0.0,
-      'yOffset': 0.0,
-    },
+},
     options: {
       'size': ['Small', 'Medium', 'Large'],
     },
@@ -290,9 +282,7 @@ final List<ComponentMetadata> componentRegistry = [
       'color': Colors.black,
       'fontWeight': FontWeight.w700,
       'disabled': false,
-      'xOffset': 0.0,
-      'yOffset': 0.0,
-    },
+},
     builder: (Map<String, dynamic> props, {bool isFullScreen = false, VoidCallback? onUpdate}) {
       return dk.TextField(
         hintText: props['hintText'] ?? 'Enter text',
@@ -319,9 +309,7 @@ final List<ComponentMetadata> componentRegistry = [
       'disabled': false,
       'color': const Color.fromARGB(255, 41, 84, 255),
       'opacity': 0.8,
-      'xOffset': 0.0,
-      'yOffset': 0.0,
-    },
+},
     options: {
       'size': ['Small', 'Medium', 'Large'],
     },
@@ -365,9 +353,7 @@ final List<ComponentMetadata> componentRegistry = [
       'disabled': false,
       'activeColor': const Color(0xFF1E1E4C),
       'labelColor': const Color(0xFF1E1E4C),
-      'xOffset': 0.0,
-      'yOffset': 0.0,
-    },
+},
     options: {
       'size': ['Small', 'Medium', 'Large'],
     },
@@ -404,9 +390,7 @@ final List<ComponentMetadata> componentRegistry = [
       'size': 'Medium',
       'isClickable': true,
       'enableHover': true,
-      'xOffset': 0.0,
-      'yOffset': 0.0,
-    },
+},
     options: {
       'size': ['Small', 'Medium', 'Large'],
     },
@@ -440,9 +424,7 @@ final List<ComponentMetadata> componentRegistry = [
     defaultProps: {
       'imagePath': 'assets/hdfc_logo.png',
       'size': 'Medium',
-      'xOffset': 0.0,
-      'yOffset': 0.0,
-      'showShadow': false,
+'showShadow': false,
     },
     options: {
       'size': ['Small', 'Medium', 'Large'],
@@ -495,9 +477,7 @@ final List<ComponentMetadata> componentRegistry = [
       'size': 'Medium',
       'activeColor': const Color(0xFF1E1E4C),
       'labelColor': Colors.black87,
-      'xOffset': 0.0,
-      'yOffset': 0.0,
-    },
+},
     options: {
       'size': ['Small', 'Medium', 'Large'],
     },
@@ -543,9 +523,7 @@ final List<ComponentMetadata> componentRegistry = [
       'size': 'Medium',
       'activeColor': const Color(0xFF1E1E4C),
       'labelColor': Colors.black87,
-      'xOffset': 0.0,
-      'yOffset': 0.0,
-    },
+},
     options: {
       'size': ['Small', 'Medium', 'Large'],
     },

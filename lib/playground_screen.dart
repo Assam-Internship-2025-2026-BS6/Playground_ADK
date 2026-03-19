@@ -98,11 +98,7 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
   }
 
   void _ensureOffsetProps() {
-    if (selectedComponent?.category == 'Molecules' &&
-        selectedComponent?.name != 'Dropdown') {
-      currentProps['xOffset'] = currentProps['xOffset'] ?? 0.0;
-      currentProps['yOffset'] = currentProps['yOffset'] ?? 0.0;
-    }
+    // Offset sliders removed.
   }
 
   @override
@@ -1058,13 +1054,19 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
 
       min = isOrganism ? 434.0 : 191.0;
 
-      max = selectedComponent?.name == 'TextField' ? 850.0 : 850.0;
+      if (selectedComponent?.name == 'Glass Card') {
+        max = 1440.0;
+      } else {
+        max = selectedComponent?.name == 'TextField' ? 850.0 : 850.0;
+      }
     } else if (lowerKey.contains("height")) {
       final isOrganism = selectedComponent?.category == 'Organisms';
 
-      min = isOrganism ? 680.0 : 80.0;
-      max = 1200.0;
-      if (selectedComponent?.category == 'Atoms') {
+      min = isOrganism ? 680.0 : 60.0;
+      max = 830.0;
+      if (selectedComponent?.name == 'Glass Card') {
+        max = 830.0;
+      } else if (selectedComponent?.category == 'Atoms') {
         max = 400.0;
       }
     } else if (lowerKey.contains("length")) {
