@@ -894,7 +894,6 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
                 "Image & Appearance": [],
                 "General Options": [],
               };
-              final List<Widget> hiddenWidgets = [];
               final Set<String> processedKeys = {};
 
               Widget renderPropertyInput(String key, dynamic value) {
@@ -977,9 +976,6 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
                 } else if (key == 'size' && currentProps[key] is String) {
                   prefix = 'component';
                   type = 'size';
-                } else if (key.endsWith('Radius') && currentProps[key] is num) {
-                  prefix = key.substring(0, key.length - 6);
-                  type = 'radius';
                 } else if (currentProps[key] is String &&
                     !key.endsWith('Size') &&
                     !key.endsWith('Color') &&
@@ -1081,14 +1077,12 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
                 final sizeKey = types['size'];
                 final textKey = types['text'];
                 final hintKey = types['hint'];
-                final radiusKey = types['radius'];
 
-                if (colorKey != null || sizeKey != null || textKey != null || hintKey != null || radiusKey != null) {
+                if (colorKey != null || sizeKey != null || textKey != null || hintKey != null) {
                   if (colorKey != null) processedKeys.add(colorKey);
                   if (sizeKey != null) processedKeys.add(sizeKey);
                   if (textKey != null) processedKeys.add(textKey);
                   if (hintKey != null) processedKeys.add(hintKey);
-                  if (radiusKey != null) processedKeys.add(radiusKey);
 
                   String title = prefix == 'component'
                       ? _formatName(selectedComponent!.name)
@@ -1115,9 +1109,8 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
                     groupName = "Text Customization";
                   }
 
-                  groups[groupName]!.add(_presetBox(
-                      title, colorKey, sizeKey,
-                      textKey: textKey, hintKey: hintKey, radiusKey: radiusKey));
+                  groups[groupName]!
+                      .add(_presetBox(title, colorKey, sizeKey, textKey: textKey, hintKey: hintKey));
                 }
               });
 
@@ -1127,12 +1120,7 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
                 if (processedKeys.contains(key)) continue;
 
                 if (key.startsWith('_')) {
-                  hiddenWidgets.add(Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: _infoRow(
-                        _formatName(key.substring(1)), entry.value.toString()),
-                  ));
-                  continue;
+                  continue; // Skip rendering dimensions in the UI
                 }
 
                 final lower = key.toLowerCase();
@@ -1157,15 +1145,6 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
               }
 
               List<Widget> finalWidgets = [];
-              if (hiddenWidgets.isNotEmpty) {
-                finalWidgets.add(Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: _propertyGroup(
-                    title: "Dimensions",
-                    children: hiddenWidgets,
-                  ),
-                ));
-              }
 
               // Render ordered groups
               for (String groupName in [
@@ -1462,8 +1441,7 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
     );
   }
 
-  Widget _presetBox(String title, String? colorKey, String? sizeKey,
-      {String? textKey, String? hintKey, String? radiusKey}) {
+  Widget _presetBox(String title, String? colorKey, String? sizeKey, {String? textKey, String? hintKey}) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
@@ -1485,24 +1463,18 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
           ],
           if (textKey != null) ...[
             _propertyTextInput(_formatName(textKey), textKey),
-            if (colorKey != null || sizeKey != null || hintKey != null || radiusKey != null)
-              const SizedBox(height: 12),
+            if (colorKey != null || sizeKey != null || hintKey != null) const SizedBox(height: 12),
           ],
           if (hintKey != null) ...[
             _propertyTextInput(_formatName(hintKey), hintKey),
-            if (colorKey != null || sizeKey != null || radiusKey != null)
-              const SizedBox(height: 12),
+            if (colorKey != null || sizeKey != null) const SizedBox(height: 12),
           ],
-          if (colorKey != null || sizeKey != null || radiusKey != null)
+          if (colorKey != null || sizeKey != null)
             Row(
               children: [
                 if (colorKey != null) _colorPresetIconDropdown(colorKey),
-                if (colorKey != null && sizeKey != null)
-                  const SizedBox(width: 12),
+                if (colorKey != null && sizeKey != null) const SizedBox(width: 12),
                 if (sizeKey != null) _sizePresetIconDropdown(sizeKey),
-                if ((colorKey != null || sizeKey != null) && radiusKey != null)
-                  const SizedBox(width: 12),
-                if (radiusKey != null) _radiusPresetIconDropdown(radiusKey),
               ],
             )
         ],
@@ -1510,23 +1482,23 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
     );
   }
 
-  Widget _radiusPresetIconDropdown(String key) {
-    final double currentRadius = (currentProps[key] as num?)?.toDouble() ?? 30.0;
-    return _NumberInputIcon(
-      initialValue: currentRadius,
-      onChanged: (val) {
-        setState(() => currentProps[key] = val);
-      },
-    );
-  }
-
   Widget _colorPresetIconDropdown(String key) {
     final currentColor = currentProps[key] as Color? ?? Colors.black;
     final palette = [
-      const Color(0xFFE5EDF4),
-      const Color(0xFF3B82F6),
-      const Color(0xFF1E40AF),
-      const Color(0xFF0B1F5E),
+      const Color(0xFF1E1E4C), // Default HDFC Blue
+      const Color(0xFF0B1F5E), // Darker Navy
+      const Color(0xFF1E40AF), // Deep Blue
+      const Color(0xFF3B82F6), // Bright primary Blue
+      const Color(0xFFE5EDF4), // Light blue tint
+      Colors.black,
+      Colors.black87,
+      Colors.grey.shade800,
+      Colors.grey.shade500,
+      Colors.grey.shade200,
+      Colors.white,
+      const Color(0xFFE11D48), // Rose Red / Danger
+      const Color(0xFF16A34A), // Emerald Green / Success
+      const Color(0xFFEA580C), // Orange / Warning
     ];
     return PopupMenuButton<Color>(
       tooltip: "Color preset",
@@ -2365,84 +2337,6 @@ class _AdvancedColorPickerState extends State<_AdvancedColorPicker> {
                 onChanged(parsed.clamp(0, 255));
               }
             },
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _NumberInputIcon extends StatefulWidget {
-  final double initialValue;
-  final ValueChanged<double> onChanged;
-
-  const _NumberInputIcon({required this.initialValue, required this.onChanged});
-
-  @override
-  State<_NumberInputIcon> createState() => _NumberInputIconState();
-}
-
-class _NumberInputIconState extends State<_NumberInputIcon> {
-  late TextEditingController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = TextEditingController(text: widget.initialValue.toInt().toString());
-  }
-
-  @override
-  void didUpdateWidget(covariant _NumberInputIcon oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.initialValue != widget.initialValue) {
-      if (double.tryParse(_controller.text) != widget.initialValue) {
-        _controller.text = widget.initialValue.toInt().toString();
-      }
-    }
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 50,
-      height: 36,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.black87, width: 1.5),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.rounded_corner, size: 14, color: Colors.black87),
-          const SizedBox(width: 2),
-          SizedBox(
-            width: 24,
-            child: TextField(
-              controller: _controller,
-              textAlign: TextAlign.center,
-              keyboardType: TextInputType.number,
-              style: const TextStyle(
-                  fontWeight: FontWeight.bold, fontSize: 13, color: Colors.black87),
-              decoration: const InputDecoration(
-                isDense: true,
-                border: InputBorder.none,
-                contentPadding: EdgeInsets.zero,
-              ),
-              onChanged: (val) {
-                double? valD = double.tryParse(val);
-                if (valD != null) {
-                  widget.onChanged(valD.clamp(0.0, 40.0));
-                }
-              },
-            ),
           ),
         ],
       ),
