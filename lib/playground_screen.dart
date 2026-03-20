@@ -886,81 +886,308 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
             ),
             const SizedBox(height: 16),
 
-            // Render all properties dynamically
-            ...currentProps.entries.map((entry) {
-              final key = entry.key;
-              final value = entry.value;
+            // Render all properties dynamically, grouped by category
+            ...() {
+              final Map<String, List<Widget>> groups = {
+                "Text Customization": [],
+                "Checkbox Customization": [],
+                "Image & Appearance": [],
+                "General Options": [],
+              };
+              final List<Widget> hiddenWidgets = [];
+              final Set<String> processedKeys = {};
 
-              if (key.startsWith('_')) {
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child:
-                      _infoRow(_formatName(key.substring(1)), value.toString()),
-                );
-              }
+              Widget renderPropertyInput(String key, dynamic value) {
+                final hasOptions =
+                    selectedComponent?.options?.containsKey(key) ?? false;
+                final isKnownEnum = key.toLowerCase().contains("variant") ||
+                    key.toLowerCase().contains("style") ||
+                    key.toLowerCase().contains("align");
 
-              // High priority: Check if this property has specific options defined in metadata
-              final hasOptions =
-                  selectedComponent?.options?.containsKey(key) ?? false;
-              final isKnownEnum = key.toLowerCase().contains("variant") ||
-                  key.toLowerCase().contains("style") ||
-                  key.toLowerCase().contains("align");
-
-              // Only treat as enum if it's NOT a numeric value (fontSize is numeric, not enum)
-              if ((hasOptions || isKnownEnum) &&
-                  value is! double &&
-                  value is! int) {
-                if (key.toLowerCase() == "size") {
-                  final String displayLabel = (selectedComponent?.name == 'Text' && key == 'size') 
-                      ? "Font Size" 
-                      : _formatName(key);
+                if ((hasOptions || isKnownEnum) &&
+                    value is! double &&
+                    value is! int) {
+                  if (key.toLowerCase() == "size" ||
+                      key.toLowerCase().contains("size")) {
+                    final String displayLabel =
+                        (selectedComponent?.name == 'Text' && key == 'size')
+                            ? "Font Size"
+                            : _formatName(key);
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: _propertySegmentedInput(displayLabel, key),
+                    );
+                  }
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 12),
-                    child: _propertySegmentedInput(displayLabel, key),
+                    child: _propertyEnumInput(_formatName(key), key),
                   );
                 }
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: _propertyEnumInput(_formatName(key), key),
-                );
+
+                if (value is bool) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: _propertyBoolInput(_formatName(key), key),
+                  );
+                } else if (value is List<String>) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: _propertyListInput(_formatName(key), key),
+                  );
+                } else if (value is double || value is int) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: _propertyNumericInput(_formatName(key), key),
+                  );
+                } else if (value is Color) {
+                  return _presetBox(_formatName(key), key, null);
+                } else if (value is String) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: _propertyTextInput(_formatName(key), key),
+                  );
+                } else if (value is FontWeight) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: _propertyFontWeightInput(_formatName(key), key),
+                  );
+                }
+                return const SizedBox();
               }
 
-              if (value is bool) {
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: _propertyBoolInput(_formatName(key), key),
-                );
-              } else if (value is List<String>) {
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: _propertyListInput(_formatName(key), key),
-                );
-              } else if (value is double || value is int) {
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: _propertyNumericInput(_formatName(key), key),
-                );
-              } else if (value is Color) {
-                final String displayLabel = (selectedComponent?.name == 'TextField' && key == 'color')
-                    ? "Text Color"
-                    : _formatName(key);
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: _propertyColorInput(displayLabel, key),
-                );
-              } else if (value is String) {
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: _propertyTextInput(_formatName(key), key),
-                );
-              } else if (value is FontWeight) {
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: _propertyFontWeightInput(_formatName(key), key),
-                );
+              // 1. Group color and size presets into boxes
+              final Map<String, Map<String, String>> unifiedGroups = {};
+              for (var key in currentProps.keys) {
+                if (key.startsWith('_')) continue;
+                String prefix = key;
+                String type = 'other';
+                if (key.endsWith('Color') && currentProps[key] is Color) {
+                  prefix = key.substring(0, key.length - 5);
+                  type = 'color';
+                } else if (key.endsWith('Size') &&
+                    (currentProps[key] == 'Small' ||
+                        currentProps[key] == 'Medium' ||
+                        currentProps[key] == 'Large' ||
+                        selectedComponent?.options?.containsKey(key) == true)) {
+                  prefix = key.substring(0, key.length - 4);
+                  type = 'size';
+                } else if (key == 'color' && currentProps[key] is Color) {
+                  prefix = 'component';
+                  type = 'color';
+                } else if (key == 'size' && currentProps[key] is String) {
+                  prefix = 'component';
+                  type = 'size';
+                } else if (key.endsWith('Radius') && currentProps[key] is num) {
+                  prefix = key.substring(0, key.length - 6);
+                  type = 'radius';
+                } else if (currentProps[key] is String &&
+                    !key.endsWith('Size') &&
+                    !key.endsWith('Color') &&
+                    selectedComponent?.options?.containsKey(key) != true) {
+                  if (key == 'buttonText') { prefix = 'button'; type = 'text'; }
+                  else if (key == 'customerIdLabel') { prefix = 'customerId'; type = 'text'; }
+                  else if (key == 'customerIdHint') { prefix = 'customerId'; type = 'hint'; }
+                  else if (key == 'passwordLabel') { prefix = 'password'; type = 'text'; }
+                  else if (key == 'qrText') { prefix = 'qrText'; type = 'text'; }
+                  else if (key == 'qrSubtitle') { prefix = 'qrSubtitle'; type = 'text'; }
+                  else if (key == 'title') { prefix = 'title'; type = 'text'; }
+                  else if (key == 'subtitle') { prefix = 'subtitle'; type = 'text'; }
+                  else if (key == 'label' && currentProps.containsKey('checkboxSize')) { prefix = 'checkbox'; type = 'text'; }
+                  else if (key == 'text' && currentProps.containsKey('size')) { prefix = 'component'; type = 'text'; }
+                }
+
+                if (type != 'other') {
+                  unifiedGroups.putIfAbsent(prefix, () => {});
+                  unifiedGroups[prefix]![type] = key;
+                }
               }
-              return const SizedBox();
-            }),
+
+              // 2. Render preset boxes
+              final Set<String> renderedPrefixes = {};
+              unifiedGroups.forEach((prefix, types) {
+                if (renderedPrefixes.contains(prefix)) return;
+
+                // SPECIAL case for merging qrText and qrSubtitle
+                if (prefix == 'qrText' || prefix == 'qrSubtitle') {
+                  final qrTextTypes = unifiedGroups['qrText'];
+                  final qrSubTypes = unifiedGroups['qrSubtitle'];
+                  
+                  if (qrTextTypes != null || qrSubTypes != null) {
+                    renderedPrefixes.add('qrText');
+                    renderedPrefixes.add('qrSubtitle');
+
+                    final List<Widget> innerWidgets = [];
+
+                    void addFields(Map<String, String>? t, String defaultTitle) {
+                      if (t == null) return;
+                      final cK = t['color'];
+                      final sK = t['size'];
+                      final txtK = t['text'];
+                      final hK = t['hint'];
+                      if (cK != null) processedKeys.add(cK);
+                      if (sK != null) processedKeys.add(sK);
+                      if (txtK != null) processedKeys.add(txtK);
+                      if (hK != null) processedKeys.add(hK);
+
+                      if (txtK == null && hK == null) {
+                        innerWidgets.add(Text(defaultTitle, style: const TextStyle(color: Colors.black87, fontSize: 14, fontWeight: FontWeight.bold)));
+                        innerWidgets.add(const SizedBox(height: 12));
+                      }
+                      if (txtK != null) {
+                        innerWidgets.add(_propertyTextInput(_formatName(txtK), txtK));
+                        if (cK != null || sK != null) innerWidgets.add(const SizedBox(height: 12));
+                      }
+                      if (hK != null) {
+                        innerWidgets.add(_propertyTextInput(_formatName(hK), hK));
+                        if (cK != null || sK != null) innerWidgets.add(const SizedBox(height: 12));
+                      }
+                      if (cK != null || sK != null) {
+                        innerWidgets.add(Row(
+                          children: [
+                            if (cK != null) _colorPresetIconDropdown(cK),
+                            if (cK != null && sK != null) const SizedBox(width: 12),
+                            if (sK != null) _sizePresetIconDropdown(sK),
+                          ]
+                        ));
+                      }
+                    }
+
+                    addFields(qrTextTypes, "QR Text");
+                    if (qrTextTypes != null && qrSubTypes != null) {
+                      innerWidgets.add(const SizedBox(height: 24));
+                    }
+                    addFields(qrSubTypes, "QR Subtitle");
+
+                    groups["Text Customization"]!.add(
+                      Container(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.black12, width: 1.5),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: innerWidgets,
+                        ),
+                      )
+                    );
+                  }
+                  return;
+                }
+
+                final colorKey = types['color'];
+                final sizeKey = types['size'];
+                final textKey = types['text'];
+                final hintKey = types['hint'];
+                final radiusKey = types['radius'];
+
+                if (colorKey != null || sizeKey != null || textKey != null || hintKey != null || radiusKey != null) {
+                  if (colorKey != null) processedKeys.add(colorKey);
+                  if (sizeKey != null) processedKeys.add(sizeKey);
+                  if (textKey != null) processedKeys.add(textKey);
+                  if (hintKey != null) processedKeys.add(hintKey);
+                  if (radiusKey != null) processedKeys.add(radiusKey);
+
+                  String title = prefix == 'component'
+                      ? _formatName(selectedComponent!.name)
+                      : _formatName(prefix);
+                  if (title.isEmpty) title = "Customization";
+                  if (!title.toLowerCase().contains("customization") &&
+                      !title.toLowerCase().contains("text") &&
+                      !title.toLowerCase().contains("checkbox") &&
+                      textKey == null) {
+                    title = "$title Customization";
+                  }
+
+                  // Determine group
+                  String groupName = "General Options";
+                  if (prefix.toLowerCase().contains('checkbox')) {
+                    groupName = "Checkbox Customization";
+                  } else if (prefix.toLowerCase().contains('title') ||
+                      prefix.toLowerCase().contains('label') ||
+                      prefix.toLowerCase().contains('text') ||
+                      prefix.toLowerCase().contains('password') ||
+                      prefix.toLowerCase().contains('customer') ||
+                      prefix.toLowerCase().contains('button') ||
+                      prefix == 'component' || prefix.toLowerCase().contains('qr')) {
+                    groupName = "Text Customization";
+                  }
+
+                  groups[groupName]!.add(_presetBox(
+                      title, colorKey, sizeKey,
+                      textKey: textKey, hintKey: hintKey, radiusKey: radiusKey));
+                }
+              });
+
+              // 3. Render everything else
+              for (var entry in currentProps.entries) {
+                final key = entry.key;
+                if (processedKeys.contains(key)) continue;
+
+                if (key.startsWith('_')) {
+                  hiddenWidgets.add(Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: _infoRow(
+                        _formatName(key.substring(1)), entry.value.toString()),
+                  ));
+                  continue;
+                }
+
+                final lower = key.toLowerCase();
+                String groupName = "General Options";
+                if (lower.contains('checkbox')) {
+                  groupName = "Checkbox Customization";
+                } else if (lower.contains('text') ||
+                    lower.contains('title') ||
+                    lower.contains('subtitle') ||
+                    lower.contains('label') ||
+                    lower.contains('hint') ||
+                    lower.contains('font') ||
+                    lower.contains('password')) {
+                  groupName = "Text Customization";
+                } else if (lower.contains('image') ||
+                    lower.contains('qr') ||
+                    lower.contains('path')) {
+                  groupName = "Image & Appearance";
+                }
+
+                groups[groupName]!.add(renderPropertyInput(key, entry.value));
+              }
+
+              List<Widget> finalWidgets = [];
+              if (hiddenWidgets.isNotEmpty) {
+                finalWidgets.add(Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: _propertyGroup(
+                    title: "Dimensions",
+                    children: hiddenWidgets,
+                  ),
+                ));
+              }
+
+              // Render ordered groups
+              for (String groupName in [
+                "Text Customization",
+                "Checkbox Customization",
+                "Image & Appearance",
+                "General Options"
+              ]) {
+                final entries = groups[groupName]!;
+                if (entries.isNotEmpty) {
+                  finalWidgets.add(Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: _propertyGroup(
+                      title: groupName,
+                      children: entries,
+                    ),
+                  ));
+                }
+              }
+
+              return finalWidgets;
+            }(),
 
             const SizedBox(height: 16),
             _propertyGroup(
@@ -1111,8 +1338,8 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
           min = -600.0;
           max = 600.0;
         } else if (lowerKey.contains("yoffset")) {
-          min = -550.0;
-          max = 550.0;
+          min = -600.0;
+          max = 600.0;
         }
       } else if (isButton) {
         if (lowerKey.contains("xoffset")) {
@@ -1235,91 +1462,142 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
     );
   }
 
-  Widget _propertyColorInput(String label, String key) {
-    final Color currentColor = currentProps[key] ?? Colors.white;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Expanded(
-                child: Text(label,
-                    style: const TextStyle(
-                        color: Colors.black,
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold),
-                    overflow: TextOverflow.ellipsis)),
-            Text(
-              '#${currentColor.toARGB32().toRadixString(16).substring(2).toUpperCase()}',
-              style: const TextStyle(
-                  color: Colors.black54,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500),
-            ),
+  Widget _presetBox(String title, String? colorKey, String? sizeKey,
+      {String? textKey, String? hintKey, String? radiusKey}) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.black12, width: 1.5),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (textKey == null && hintKey == null) ...[
+            Text(title,
+                style: const TextStyle(
+                    color: Colors.black87,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold)),
+            const SizedBox(height: 12),
           ],
-        ),
-        const SizedBox(height: 12),
-        _AdvancedColorPicker(
-          color: currentColor,
-          onChanged: (newColor) {
-            setState(() {
-              currentProps[key] = newColor;
-            });
-          },
-        ),
-        if ((selectedComponent?.name == 'Button' || selectedComponent?.name == 'Text') && key == 'color') ...[
-          const SizedBox(height: 16),
-          const Text(
-            "HDFC Blue Palette",
-            style: TextStyle(
-                color: Colors.black54,
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 0.5),
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              _colorPaletteSwatch(const Color(0xFFE5EDF4), key), // Light Blue
-              _colorPaletteSwatch(const Color(0xFF3B82F6), key), // Medium Blue
-              _colorPaletteSwatch(const Color(0xFF1E40AF), key), // Dark Blue
-              _colorPaletteSwatch(const Color(0xFF0B1F5E), key), // Deep Blue
-            ],
-          ),
+          if (textKey != null) ...[
+            _propertyTextInput(_formatName(textKey), textKey),
+            if (colorKey != null || sizeKey != null || hintKey != null || radiusKey != null)
+              const SizedBox(height: 12),
+          ],
+          if (hintKey != null) ...[
+            _propertyTextInput(_formatName(hintKey), hintKey),
+            if (colorKey != null || sizeKey != null || radiusKey != null)
+              const SizedBox(height: 12),
+          ],
+          if (colorKey != null || sizeKey != null || radiusKey != null)
+            Row(
+              children: [
+                if (colorKey != null) _colorPresetIconDropdown(colorKey),
+                if (colorKey != null && sizeKey != null)
+                  const SizedBox(width: 12),
+                if (sizeKey != null) _sizePresetIconDropdown(sizeKey),
+                if ((colorKey != null || sizeKey != null) && radiusKey != null)
+                  const SizedBox(width: 12),
+                if (radiusKey != null) _radiusPresetIconDropdown(radiusKey),
+              ],
+            )
         ],
-      ],
+      ),
     );
   }
 
-  Widget _colorPaletteSwatch(Color paletteColor, String key) {
-    final bool isSelected = (currentProps[key] as Color?)?.toARGB32() == paletteColor.toARGB32();
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: () => setState(() => currentProps[key] = paletteColor),
-        child: Container(
-          width: 32,
-          height: 32,
-          margin: const EdgeInsets.only(right: 12),
-          decoration: BoxDecoration(
-            color: paletteColor,
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: isSelected ? Colors.black : Colors.white24,
-              width: isSelected ? 2.5 : 1,
-            ),
-            boxShadow: [
-              if (isSelected)
-                BoxShadow(
-                  color: paletteColor.withValues(alpha: 0.4),
-                  blurRadius: 8,
-                  spreadRadius: 2,
+  Widget _radiusPresetIconDropdown(String key) {
+    final double currentRadius = (currentProps[key] as num?)?.toDouble() ?? 30.0;
+    return _NumberInputIcon(
+      initialValue: currentRadius,
+      onChanged: (val) {
+        setState(() => currentProps[key] = val);
+      },
+    );
+  }
+
+  Widget _colorPresetIconDropdown(String key) {
+    final currentColor = currentProps[key] as Color? ?? Colors.black;
+    final palette = [
+      const Color(0xFFE5EDF4),
+      const Color(0xFF3B82F6),
+      const Color(0xFF1E40AF),
+      const Color(0xFF0B1F5E),
+    ];
+    return PopupMenuButton<Color>(
+      tooltip: "Color preset",
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      offset: const Offset(0, 40),
+      onSelected: (color) => setState(() => currentProps[key] = color),
+      itemBuilder: (context) => palette
+          .map((color) => PopupMenuItem(
+                value: color,
+                child: Row(
+                  children: [
+                    Container(
+                        width: 24,
+                        height: 24,
+                        decoration: BoxDecoration(
+                            color: color,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.black12))),
+                    const SizedBox(width: 12),
+                    Text(
+                        '#${color.toARGB32().toRadixString(16).substring(2).toUpperCase()}',
+                        style: const TextStyle(fontWeight: FontWeight.w600)),
+                  ],
                 ),
-            ],
-          ),
+              ))
+          .toList(),
+      child: Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          color: currentColor,
+          shape: BoxShape.circle,
+          border: Border.all(color: Colors.black26, width: 1.5),
         ),
+      ),
+    );
+  }
+
+  Widget _sizePresetIconDropdown(String key) {
+    final currentSize = currentProps[key] as String? ?? 'Medium';
+    String displayObj = "H2"; // Default Medium
+    if (currentSize == 'Small') displayObj = "H3";
+    if (currentSize == 'Large') displayObj = "H1";
+
+    const sizes = ["Small", "Medium", "Large"];
+    return PopupMenuButton<String>(
+      tooltip: "Font size preset",
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      offset: const Offset(0, 40),
+      onSelected: (size) => setState(() => currentProps[key] = size),
+      itemBuilder: (context) => sizes
+          .map((size) => PopupMenuItem(
+                value: size,
+                child: Text(size,
+                    style: const TextStyle(fontWeight: FontWeight.w600)),
+              ))
+          .toList(),
+      child: Container(
+        width: 36,
+        height: 36,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.black87, width: 1.5),
+        ),
+        child: Text(displayObj,
+            style: const TextStyle(
+                fontWeight: FontWeight.bold, fontSize: 13, color: Colors.black87)),
       ),
     );
   }
@@ -2087,6 +2365,84 @@ class _AdvancedColorPickerState extends State<_AdvancedColorPicker> {
                 onChanged(parsed.clamp(0, 255));
               }
             },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _NumberInputIcon extends StatefulWidget {
+  final double initialValue;
+  final ValueChanged<double> onChanged;
+
+  const _NumberInputIcon({required this.initialValue, required this.onChanged});
+
+  @override
+  State<_NumberInputIcon> createState() => _NumberInputIconState();
+}
+
+class _NumberInputIconState extends State<_NumberInputIcon> {
+  late TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.initialValue.toInt().toString());
+  }
+
+  @override
+  void didUpdateWidget(covariant _NumberInputIcon oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.initialValue != widget.initialValue) {
+      if (double.tryParse(_controller.text) != widget.initialValue) {
+        _controller.text = widget.initialValue.toInt().toString();
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 50,
+      height: 36,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.black87, width: 1.5),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.rounded_corner, size: 14, color: Colors.black87),
+          const SizedBox(width: 2),
+          SizedBox(
+            width: 24,
+            child: TextField(
+              controller: _controller,
+              textAlign: TextAlign.center,
+              keyboardType: TextInputType.number,
+              style: const TextStyle(
+                  fontWeight: FontWeight.bold, fontSize: 13, color: Colors.black87),
+              decoration: const InputDecoration(
+                isDense: true,
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.zero,
+              ),
+              onChanged: (val) {
+                double? valD = double.tryParse(val);
+                if (valD != null) {
+                  widget.onChanged(valD.clamp(0.0, 40.0));
+                }
+              },
+            ),
           ),
         ],
       ),

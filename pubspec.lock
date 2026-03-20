@@ -52,7 +52,7 @@ packages:
   designkit:
     dependency: "direct main"
     description:
-      path: "../designkit"
+      path: "../Flutter-DesignKit-/designkit"
       relative: true
     source: path
     version: "1.0.0+1"
