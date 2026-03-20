@@ -4,7 +4,6 @@ import 'package:flutter/services.dart';
 import 'utils/web_utils.dart';
 import 'component_registry.dart';
 import 'component_metadata.dart';
-import 'package:designkit/components/atoms/glass_container.dart';
 import 'generated_sources.dart';
 
 class PlaygroundScreen extends StatefulWidget {
@@ -987,10 +986,12 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
 
   Widget _propertyGroup(
       {required String title, required List<Widget> children}) {
-    return GlassContainer(
+    return Container(
       padding: const EdgeInsets.all(16),
-      opacity: 0.05,
-      borderRadius: BorderRadius.circular(16),
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(16),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

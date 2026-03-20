@@ -7,8 +7,7 @@ import 'package:designkit/designkit.dart'
         TextButton,
         Checkbox,
         RadioButton,
-        ToggleSwitch,
-        Dropdown;
+        ToggleSwitch;
 import 'package:designkit/designkit.dart' as dk
     show
         Text,
