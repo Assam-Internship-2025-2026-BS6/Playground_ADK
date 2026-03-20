@@ -342,7 +342,7 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
 
   Widget _header() {
     return Container(
-      height: 70, // Increased back to 70 for better proportion with larger bars
+      height: 60, // Increased back to 70 for better proportion with larger bars
       padding: const EdgeInsets.symmetric(horizontal: 24),
       decoration: const BoxDecoration(
         color: Color(0xFF0F326A), // Dark HDFC Blue
@@ -351,7 +351,7 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
         children: [
           Image.asset(
             'assets/hdfc_logo.png',
-            height: 36,
+            height: 40,
           ), // Scaled up slightly
           const SizedBox(width: 40),
           const VerticalDivider(
