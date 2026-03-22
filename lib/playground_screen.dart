@@ -1106,7 +1106,11 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
                       prefix.toLowerCase().contains('customer') ||
                       prefix.toLowerCase().contains('button') ||
                       prefix == 'component' || prefix.toLowerCase().contains('qr')) {
-                    groupName = "Text Customization";
+                    if (selectedComponent?.name == 'Image' || selectedComponent?.name == 'Glass Card') {
+                      groupName = "Image & Appearance";
+                    } else {
+                      groupName = "Text Customization";
+                    }
                   }
 
                   groups[groupName]!
@@ -1469,14 +1473,12 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
             _propertyTextInput(_formatName(hintKey), hintKey),
             if (colorKey != null || sizeKey != null) const SizedBox(height: 12),
           ],
-          if (colorKey != null || sizeKey != null)
-            Row(
-              children: [
-                if (colorKey != null) _colorPresetIconDropdown(colorKey),
-                if (colorKey != null && sizeKey != null) const SizedBox(width: 12),
-                if (sizeKey != null) _sizePresetIconDropdown(sizeKey),
-              ],
-            )
+          if (colorKey != null) ...[
+            _colorPresetIconDropdown(colorKey),
+            if (sizeKey != null) const SizedBox(height: 16),
+          ],
+          if (sizeKey != null) 
+            _propertySegmentedInput("", sizeKey),
         ],
       ),
     );
@@ -1931,12 +1933,14 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label,
-            style: const TextStyle(
-                color: Colors.black,
-                fontSize: 13,
-                fontWeight: FontWeight.bold)),
-        const SizedBox(height: 8),
+        if (label.isNotEmpty) ...[
+          Text(label,
+              style: const TextStyle(
+                  color: Colors.black,
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+        ],
         Container(
           decoration: BoxDecoration(
             color: Colors.white,
@@ -1979,16 +1983,7 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
 
   Widget _propertyFontWeightInput(String label, String key) {
     final FontWeight currentWeight = currentProps[key] ?? FontWeight.normal;
-    final List<FontWeight> weights = [
-      FontWeight.w100,
-      FontWeight.w700,
-    ];
-
-    String weightName(FontWeight w) {
-      if (w == FontWeight.w100) return "Thin";
-      if (w == FontWeight.w700) return "Bold";
-      return "Weight";
-    }
+    final bool isBold = currentWeight == FontWeight.bold || currentWeight == FontWeight.w700;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1999,31 +1994,52 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
                 fontSize: 13,
                 fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.black12),
-          ),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<FontWeight>(
-              value: currentWeight,
-              isExpanded: true,
-              icon: const Icon(Icons.keyboard_arrow_down_rounded,
-                  color: Colors.black54, size: 20),
-              style: const TextStyle(color: Colors.black, fontSize: 14),
-              items: weights
-                  .map((w) => DropdownMenuItem(
-                        value: w,
-                        child: Text(weightName(w), style: const TextStyle()),
-                      ))
-                  .toList(),
-              onChanged: (val) {
-                if (val != null) setState(() => currentProps[key] = val);
-              },
+        Row(
+          children: [
+            GestureDetector(
+              onTap: () => setState(() {
+                currentProps[key] = isBold ? FontWeight.normal : FontWeight.bold;
+              }),
+              child: Container(
+                width: 40,
+                height: 40,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: isBold ? const Color(0xFF1E1E4C) : Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: isBold ? const Color(0xFF1E1E4C) : Colors.black12,
+                    width: 1.5,
+                  ),
+                  boxShadow: [
+                    if (isBold)
+                      BoxShadow(
+                        color: const Color(0xFF1E1E4C).withValues(alpha: 0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                  ],
+                ),
+                child: Text(
+                  "B",
+                  style: TextStyle(
+                    color: isBold ? Colors.white : Colors.black87,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
+                ),
+              ),
             ),
-          ),
+            const SizedBox(width: 12),
+            Text(
+              isBold ? "Bold" : "Normal",
+              style: const TextStyle(
+                color: Colors.black54,
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
         ),
       ],
     );

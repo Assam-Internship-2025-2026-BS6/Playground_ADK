@@ -303,7 +303,7 @@ final List<ComponentMetadata> componentRegistry = [
       'text': 'Hello World',
       'size': 'Medium',
       'color': Colors.black,
-      'fontWeight': FontWeight.w700,
+      'fontWeight': FontWeight.normal,
       'xOffset': 0.0,
       'yOffset': 0.0,
 },
@@ -343,12 +343,26 @@ final List<ComponentMetadata> componentRegistry = [
       'width': 400.0,
       'showErrorText': false,
       'color': Colors.black,
-      'fontWeight': FontWeight.w700,
+      'fontWeight': FontWeight.normal,
+      'size': 'Medium',
       'disabled': false,
       'xOffset': 0.0,
       'yOffset': 0.0,
 },
+    options: {
+      'size': ['Small', 'Medium', 'Large'],
+    },
     builder: (Map<String, dynamic> props, {bool isFullScreen = false, VoidCallback? onUpdate}) {
+      final size = props['size'] ?? 'Medium';
+      double fontSize = 28.0;
+      if (size == 'Small') {
+        fontSize = 20.0;
+      } else if (size == 'Medium') {
+        fontSize = 28.0;
+      } else if (size == 'Large') {
+        fontSize = 36.0;
+      }
+
       return dk.TextField(
         hintText: props['hintText'] ?? 'Enter text',
         isPassword: props['isPassword'] ?? false,
@@ -356,7 +370,8 @@ final List<ComponentMetadata> componentRegistry = [
         width: (props['width'] as num?)?.toDouble() ?? 400.0,
         showErrorText: props['showErrorText'] ?? false,
         textColor: props['color'] ?? Colors.black,
-        fontWeight: props['fontWeight'] ?? FontWeight.w700,
+        fontWeight: props['fontWeight'] ?? FontWeight.normal,
+        fontSize: fontSize,
         enabled: !(props['disabled'] ?? false),
         offset: Offset(
           (props['xOffset'] as num?)?.toDouble() ?? 0.0,
@@ -374,6 +389,7 @@ final List<ComponentMetadata> componentRegistry = [
       'disabled': false,
       'color': const Color.fromARGB(255, 41, 84, 255),
       'opacity': 0.8,
+      'fontWeight': FontWeight.normal,
       'xOffset': 0.0,
       'yOffset': 0.0,
 },
@@ -403,6 +419,7 @@ final List<ComponentMetadata> componentRegistry = [
         disabled: props['disabled'] ?? false,
         color: props['color'] ?? const Color(0xFF5371F9),
         opacity: (props['opacity'] as num?)?.toDouble() ?? 0.8,
+        fontWeight: props['fontWeight'] ?? FontWeight.normal,
         onTap: () => debugPrint('Button Pressed'),
         offset: Offset(
           (props['xOffset'] as num?)?.toDouble() ?? 0.0,
@@ -412,7 +429,7 @@ final List<ComponentMetadata> componentRegistry = [
     },
   ),
   ComponentMetadata(
-    name: 'Checkbox',
+    name: 'Check Box',
     category: 'Atoms',
     defaultProps: {
       'label': 'Keep me logged in',
@@ -420,6 +437,8 @@ final List<ComponentMetadata> componentRegistry = [
       'disabled': false,
       'activeColor': const Color(0xFF1E1E4C),
       'labelColor': const Color(0xFF1E1E4C),
+      'fontWeight': FontWeight.normal,
+      'opacity': 1.0,
       'xOffset': 0.0,
       'yOffset': 0.0,
 },
@@ -436,10 +455,12 @@ final List<ComponentMetadata> componentRegistry = [
       }
 
       return dk.Checkbox(
-        value: false, // Internal state will take over after first render
+        value: props['value'] ?? false, 
         label: props['label'],
         size: componentSize,
         disabled: props['disabled'] ?? false,
+        fontWeight: props['fontWeight'] ?? FontWeight.normal,
+        opacity: (props['opacity'] as num?)?.toDouble() ?? 1.0,
         activeColor: props['activeColor'] ?? const Color(0xFF1E1E4C),
         labelColor: props['labelColor'] ?? const Color(0xFF1E1E4C),
         offset: Offset(
@@ -459,6 +480,7 @@ final List<ComponentMetadata> componentRegistry = [
       'size': 'Medium',
       'isClickable': true,
       'enableHover': true,
+      'fontWeight': FontWeight.normal,
       'xOffset': 0.0,
       'yOffset': 0.0,
 },
@@ -479,6 +501,7 @@ final List<ComponentMetadata> componentRegistry = [
       return dk.TextButton(
         text: props['text'] ?? 'Click Me',
         fontSize: fontSize,
+        fontWeight: props['fontWeight'] ?? FontWeight.normal,
         isClickable: props['isClickable'] ?? true,
         enableHover: props['enableHover'] ?? true,
         offset: Offset(
@@ -550,6 +573,7 @@ final List<ComponentMetadata> componentRegistry = [
       'size': 'Medium',
       'activeColor': const Color(0xFF1E1E4C),
       'labelColor': Colors.black87,
+      'fontWeight': FontWeight.normal,
       'xOffset': 0.0,
       'yOffset': 0.0,
 },
@@ -571,6 +595,7 @@ final List<ComponentMetadata> componentRegistry = [
             label: props['label'] ?? 'Radio Option',
             value: props['value'] ?? false,
             fontSize: fontSize,
+            fontWeight: props['fontWeight'] ?? FontWeight.normal,
             activeColor: props['activeColor'] ?? const Color(0xFF1E1E4C),
             labelColor: props['labelColor'] ?? Colors.black87,
             offset: Offset(
@@ -596,8 +621,9 @@ final List<ComponentMetadata> componentRegistry = [
       'label': 'Enable Notifications',
       'value': false,
       'size': 'Medium',
-      'activeColor': const Color(0xFF1E1E4C),
       'labelColor': Colors.black87,
+      'fontWeight': FontWeight.normal,
+      'disabled': false,
       'xOffset': 0.0,
       'yOffset': 0.0,
 },
@@ -620,6 +646,8 @@ final List<ComponentMetadata> componentRegistry = [
             value: props['value'] ?? false,
             size: componentSize,
             fontSize: 30.0,
+            fontWeight: props['fontWeight'] ?? FontWeight.normal,
+            disabled: props['disabled'] ?? false,
             activeColor: props['activeColor'] ?? const Color(0xFF1E1E4C),
             labelColor: props['labelColor'] ?? Colors.black87,
             offset: Offset(
