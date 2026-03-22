@@ -1757,7 +1757,7 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
                   icon: const Icon(Icons.copy_rounded, size: 18),
                   label: const Text("Copy Active Code"),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF1E1E4C),
+                    backgroundColor: const Color(0xFF004C8F),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(
                         horizontal: 20, vertical: 12),
