@@ -12,7 +12,7 @@ dependencies:
 
   # DesignKit dependency pulled directly from GitHub
   designkit:
-    path: ../designkit
+    path: ../Flutter-Designkit-/designkit
 
   cupertino_icons: ^1.0.8
 
