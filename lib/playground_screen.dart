@@ -110,7 +110,8 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
       'Toggle Switch'
     ];
     
-    if (targetAtoms.contains(selectedComponent!.name)) {
+    if (targetAtoms.contains(selectedComponent!.name) ||
+        selectedComponent!.category == 'Molecules') {
       if (!currentProps.containsKey('xOffset')) currentProps['xOffset'] = 0.0;
       if (!currentProps.containsKey('yOffset')) currentProps['yOffset'] = 0.0;
     }
@@ -1364,6 +1365,33 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
           min = -620.0;
           max = 620.0;
         }
+      } else if (selectedComponent?.category == 'Molecules') {
+        final name = selectedComponent?.name;
+        final isQRorDigi = name == 'QR Login' || name == 'Digicart Security';
+        final isInputField = name == 'Labeled Input Field' || name == 'Password Field';
+        final isDropdown = name == 'Dropdown';
+        
+        if (lowerKey.contains("xoffset")) {
+          if (isQRorDigi) {
+            min = -346.0; max = 346.0;
+          } else if (isInputField) {
+            min = -120.0; max = 120.0;
+          } else if (isDropdown) {
+            min = -435.0; max = 435.0;
+          } else {
+            min = -750.0; max = 750.0;
+          }
+        } else if (lowerKey.contains("yoffset")) {
+          if (isQRorDigi) {
+            min = -355.0; max = 355.0;
+          } else if (isInputField) {
+            min = -285.0; max = 285.0;
+          } else if (isDropdown) {
+            min = -380.0; max = 380.0;
+          } else {
+            min = -650.0; max = 650.0;
+          }
+        }
       } else {
         min = -500.0;
         max = 500.0;
@@ -1488,6 +1516,7 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
     final currentColor = currentProps[key] as Color? ?? Colors.black;
     final palette = [
       const Color(0xFF1E1E4C), // Default HDFC Blue
+      const Color(0xFF004C8F), // Added New Blue
       const Color(0xFF0B1F5E), // Darker Navy
       const Color(0xFF1E40AF), // Deep Blue
       const Color(0xFF3B82F6), // Bright primary Blue

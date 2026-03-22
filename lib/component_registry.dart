@@ -151,6 +151,8 @@ final List<ComponentMetadata> componentRegistry = [
       'width': 484.0,
       'height': 120.0,
       'opacity': 0.2,
+      'xOffset': 0.0,
+      'yOffset': 0.0,
 },
     builder: (Map<String, dynamic> props, {bool isFullScreen = false, VoidCallback? onUpdate}) {
       return QrLogin(
@@ -174,6 +176,8 @@ final List<ComponentMetadata> componentRegistry = [
       'width': 484.0,
       'height': 120.0,
       'opacity': 0.2,
+      'xOffset': 0.0,
+      'yOffset': 0.0,
 },
     builder: (Map<String, dynamic> props, {bool isFullScreen = false, VoidCallback? onUpdate}) {
       return DigicartSecurity(
@@ -194,6 +198,8 @@ final List<ComponentMetadata> componentRegistry = [
       'label': 'Customer ID/ User ID',
       'hintText': 'Enter your ID',
       'width': 700.0,
+      'xOffset': 0.0,
+      'yOffset': 0.0,
 },
     builder: (Map<String, dynamic> props, {bool isFullScreen = false, VoidCallback? onUpdate}) {
       return LabeledInputField(
@@ -210,6 +216,8 @@ final List<ComponentMetadata> componentRegistry = [
       'label': 'Password/ PIN',
       'hintText': 'Enter password',
       'width': 700.0,
+      'xOffset': 0.0,
+      'yOffset': 0.0,
 },
     builder: (Map<String, dynamic> props, {bool isFullScreen = false, VoidCallback? onUpdate}) {
       return PasswordField(
@@ -232,6 +240,8 @@ final List<ComponentMetadata> componentRegistry = [
       ],
       'width': 300.0,
       'activeColor': const Color(0xFF1E1E4C),
+      'xOffset': 0.0,
+      'yOffset': 0.0,
 },
     options: {
       'value': [
@@ -387,7 +397,7 @@ final List<ComponentMetadata> componentRegistry = [
       'text': 'Know More',
       'size': 'Medium',
       'disabled': false,
-      'color': const Color.fromARGB(255, 41, 84, 255),
+      'color': const Color(0xFF004C8F),
       'opacity': 0.8,
       'fontWeight': FontWeight.normal,
       'xOffset': 0.0,
@@ -417,7 +427,7 @@ final List<ComponentMetadata> componentRegistry = [
         width: width,
         height: height,
         disabled: props['disabled'] ?? false,
-        color: props['color'] ?? const Color(0xFF5371F9),
+        color: props['color'] ?? const Color(0xFF004C8F),
         opacity: (props['opacity'] as num?)?.toDouble() ?? 0.8,
         fontWeight: props['fontWeight'] ?? FontWeight.normal,
         onTap: () => debugPrint('Button Pressed'),
