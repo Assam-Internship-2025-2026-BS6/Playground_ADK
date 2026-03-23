@@ -22,6 +22,14 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
   int _refreshCounter = 0;
   String _searchQuery = "";
   late TextEditingController _searchController;
+  Color _canvasColor = const Color.fromARGB(255, 246, 247, 248);
+  Color _themeHeaderColor = const Color(0xFF0F326A);
+  Color _themeLeftSidebarColor = const Color.fromARGB(255, 208, 236, 255);
+  Color _themeSearchSectionColor = const Color.fromARGB(255, 255, 255, 255);
+  Color _themeLeftSubSectionColor = const Color.fromARGB(255, 182, 205, 225);
+  Color _themeRightSidebarColor = const Color(0xFFE0F2FE);
+  Color _themeRightSubSectionColor = const Color.fromRGBO(0, 0, 0, 0.05); // approx black with 0.05 opacity
+  Color _themeRightSubSectionInnerColor = Colors.white;
 
   double _sidebarWidth = 320.0;
   double _propertiesWidth = 320.0;
@@ -233,7 +241,7 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
           return Scaffold(
             key: _scaffoldKey,
             appBar: AppBar(
-              backgroundColor: const Color(0xFF1E1E4C),
+              backgroundColor: _themeHeaderColor,
               elevation: 0,
               leading: IconButton(
                 icon: const Icon(Icons.menu, color: Colors.white),
@@ -249,6 +257,7 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
               ),
               centerTitle: true,
               actions: [
+                _buildThemeIconDropdown(iconColor: Colors.white),
                 IconButton(
                   icon: const Icon(Icons.settings, color: Colors.white),
                   onPressed: () => _scaffoldKey.currentState?.openEndDrawer(),
@@ -345,8 +354,8 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
     return Container(
       height: 60, // Increased back to 70 for better proportion with larger bars
       padding: const EdgeInsets.symmetric(horizontal: 24),
-      decoration: const BoxDecoration(
-        color: Color(0xFF0F326A), // Dark HDFC Blue
+      decoration: BoxDecoration(
+        color: _themeHeaderColor, // Dark HDFC Blue
       ),
       child: Row(
         children: [
@@ -376,8 +385,264 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
               ],
             ),
           ),
+          const Spacer(),
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: _buildThemeIconDropdown(iconColor: Colors.white),
+          ),
         ],
       ),
+    );
+  }
+
+  Widget _buildThemeIconDropdown({required Color iconColor}) {
+    return IconButton(
+      icon: Icon(Icons.palette, color: iconColor),
+      tooltip: 'Theme Editor',
+      onPressed: _showThemeEditorDialog,
+    );
+  }
+
+  void _showThemeEditorDialog() {
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'Theme Editor',
+      barrierColor: Colors.black.withOpacity(0.3),
+      transitionDuration: const Duration(milliseconds: 250),
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
+        return SlideTransition(
+          position: Tween<Offset>(begin: const Offset(1, 0), end: Offset.zero)
+              .animate(CurvedAnimation(parent: animation, curve: Curves.easeOutCubic)),
+          child: child,
+        );
+      },
+      pageBuilder: (context, animation, secondaryAnimation) {
+        final screenWidth = MediaQuery.of(context).size.width;
+        final drawerWidth = screenWidth < 500 ? screenWidth * 0.85 : 380.0;
+        
+        return Align(
+          alignment: Alignment.centerRight,
+          child: Container(
+            width: drawerWidth,
+            height: double.infinity,
+            decoration: const BoxDecoration(
+              color: Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.horizontal(left: Radius.circular(24)),
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: SafeArea(
+                child: StatefulBuilder(
+                  builder: (context, setDialogState) {
+                    Widget colorPickerRow(IconData icon, String title, Color currentColor, ValueChanged<Color> onChanged) {
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 12.0),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF0F4F8),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Icon(icon, size: 16, color: const Color(0xFF1E1E4C)),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(title,
+                                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Colors.black87),
+                              ),
+                            ),
+                            _buildColorGridPopup(currentColor, (color) {
+                              onChanged(color);
+                              setDialogState(() {});
+                              setState(() {});
+                            }),
+                          ],
+                        ),
+                      );
+                    }
+
+                    Widget buildGroupContainer(String title, List<Widget> children) {
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 24),
+                        padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.03),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                          border: Border.all(color: Colors.black.withOpacity(0.04)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(title, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF1E1E4C), letterSpacing: 1.2)),
+                            const SizedBox(height: 16),
+                            ...children,
+                          ],
+                        ),
+                      );
+                    }
+
+                    return Column(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: const BorderRadius.only(topLeft: Radius.circular(24)),
+                            border: Border(bottom: BorderSide(color: Colors.black.withOpacity(0.05))),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text(
+                                "Theme Settings",
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF1E1E4C),
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.refresh_rounded, color: Color(0xFF1E1E4C)),
+                                tooltip: "Reset to Default Theme",
+                                onPressed: () {
+                                  _themeHeaderColor = const Color(0xFF0F326A);
+                                  _canvasColor = const Color.fromARGB(255, 246, 247, 248);
+                                  _themeLeftSidebarColor = const Color.fromARGB(255, 208, 236, 255);
+                                  _themeSearchSectionColor = const Color.fromARGB(255, 255, 255, 255);
+                                  _themeLeftSubSectionColor = const Color.fromARGB(255, 182, 205, 225);
+                                  _themeRightSidebarColor = const Color(0xFFE0F2FE);
+                                  _themeRightSubSectionColor = const Color.fromRGBO(0, 0, 0, 0.05);
+                                  _themeRightSubSectionInnerColor = Colors.white;
+                                  setDialogState(() {});
+                                  setState(() {});
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                        Expanded(
+                          child: SingleChildScrollView(
+                            padding: const EdgeInsets.all(24),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                buildGroupContainer("GLOBAL", [
+                                  colorPickerRow(Icons.web_asset, "Header Bar", _themeHeaderColor, (c) => _themeHeaderColor = c),
+                                  colorPickerRow(Icons.desktop_windows, "Desktop Canvas", _canvasColor, (c) => _canvasColor = c),
+                                ]),
+                                buildGroupContainer("LEFT PANEL", [
+                                  colorPickerRow(Icons.vertical_split, "Main Sidebar", _themeLeftSidebarColor, (c) => _themeLeftSidebarColor = c),
+                                  colorPickerRow(Icons.search, "Search Section", _themeSearchSectionColor, (c) => _themeSearchSectionColor = c),
+                                  colorPickerRow(Icons.widgets, "Category Group", _themeLeftSubSectionColor, (c) => _themeLeftSubSectionColor = c),
+                                ]),
+                                buildGroupContainer("RIGHT PANEL", [
+                                  colorPickerRow(Icons.dock, "Properties Sidebar", _themeRightSidebarColor, (c) => _themeRightSidebarColor = c),
+                                  colorPickerRow(Icons.layers, "Properties Group", _themeRightSubSectionColor, (c) => _themeRightSubSectionColor = c),
+                                  colorPickerRow(Icons.tune, "Inner Customization", _themeRightSubSectionInnerColor, (c) => _themeRightSubSectionInnerColor = c),
+                                ]),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  }
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  List<Color> get _extendedColorPalette => [
+    // Monochromes
+    Colors.white, const Color(0xFFF3F4F6), const Color(0xFFE5E7EB), const Color(0xFFD1D5DB), const Color(0xFF9CA3AF), const Color(0xFF4B5563), Colors.black,
+    // Reds
+    const Color(0xFFFEE2E2), const Color(0xFFFECACA), const Color(0xFFFCA5A5), const Color(0xFFF87171), const Color(0xFFEF4444), const Color(0xFFDC2626), const Color(0xFFB91C1C),
+    // Oranges
+    const Color(0xFFFFEDD5), const Color(0xFFFED7AA), const Color(0xFFFDBA74), const Color(0xFFFB923C), const Color(0xFFF97316), const Color(0xFFEA580C), const Color(0xFFC2410C),
+    // Yellows
+    const Color(0xFFFEF9C3), const Color(0xFFFEF08A), const Color(0xFFFDE047), const Color(0xFFFACC15), const Color(0xFFEAB308), const Color(0xFFCA8A04), const Color(0xFFA16207),
+    // Greens
+    const Color(0xFFDCFCE7), const Color(0xFFBBF7D0), const Color(0xFF86EFAC), const Color(0xFF4ADE80), const Color(0xFF22C55E), const Color(0xFF16A34A), const Color(0xFF15803D),
+    // Blues
+    const Color(0xFFEFF6FF), const Color(0xFFDBEAFE), const Color(0xFFBFDBFE), const Color(0xFF93C5FD), const Color(0xFF60A5FA), const Color(0xFF3B82F6), const Color(0xFF2563EB),
+    // Theme Blues
+    const Color(0xFFF6F7F8), const Color(0xFFE5EDF4), const Color(0xFFBAE6FD), const Color(0xFF38BDF8), const Color(0xFF0284C7), const Color(0xFF004C8F), const Color(0xFF0F326A),
+    // Purples
+    const Color(0xFFF3E8FF), const Color(0xFFE9D5FF), const Color(0xFFD8B4FE), const Color(0xFFC084FC), const Color(0xFFA855F7), const Color(0xFF9333EA), const Color(0xFF7E22CE),
+  ];
+
+  Widget _buildColorGridPopup(Color currentColor, ValueChanged<Color> onChanged) {
+    final palette = _extendedColorPalette;
+
+    return PopupMenuButton<Color>(
+      tooltip: 'Pick Color',
+      icon: Container(
+        width: 32,
+        height: 32,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: currentColor,
+          shape: BoxShape.circle,
+          border: Border.all(color: Colors.black26),
+        ),
+      ),
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      offset: const Offset(0, 40),
+      onSelected: onChanged,
+      itemBuilder: (context) => [
+        PopupMenuItem(
+          value: currentColor, // Safe fallback
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: SizedBox(
+            width: 244,
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: palette.map((color) => GestureDetector(
+                onTap: () {
+                  Navigator.pop(context, color);
+                },
+                child: MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: Container(
+                    width: 28,
+                    height: 28,
+                    decoration: BoxDecoration(
+                      color: color,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: currentColor == color ? Colors.black : Colors.black12, 
+                        width: currentColor == color ? 2.5 : 1
+                      ),
+                      boxShadow: currentColor == color 
+                        ? [BoxShadow(color: color.withOpacity(0.4), blurRadius: 4, spreadRadius: 1)]
+                        : null,
+                    ),
+                  ),
+                ),
+              )).toList(),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -385,7 +650,7 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
 
   Widget _sidebar() {
     return Container(
-      color: const Color.fromARGB(255, 208, 236, 255), //color for sidebar
+      color: _themeLeftSidebarColor, //color for sidebar
       child: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
         child: Column(
@@ -407,7 +672,7 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
             // Search Bar
             Container(
               decoration: BoxDecoration(
-                color: const Color.fromARGB(255, 255, 255, 255),
+                color: _themeSearchSectionColor,
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
@@ -540,8 +805,7 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: const Color.fromARGB(
-            255, 182, 205, 225), // Distinct shade for categories
+        color: _themeLeftSubSectionColor, // Distinct shade for categories
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -715,8 +979,7 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
                               ? Container(
                                   width: 1440,
                                   height: 1024,
-                                  color:
-                                      const Color.fromARGB(255, 247, 247, 251),
+                                  color: _canvasColor,
                                   child: selectedComponent!.name ==
                                           'NetBankingLoginPage'
                                       ? selectedComponent!.builder(currentProps,
@@ -731,8 +994,7 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
                                 )
                               : Container(
                                   decoration: BoxDecoration(
-                                    color: const Color.fromARGB(
-                                        255, 246, 247, 248),
+                                    color: _canvasColor,
                                     borderRadius: BorderRadius.circular(12),
                                     boxShadow: [
                                       BoxShadow(
@@ -841,7 +1103,7 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
     if (selectedComponent == null) return const SizedBox();
 
     return Container(
-      color: const Color(0xFFE0F2FE), // Deeper bluish tint for properties
+      color: _themeRightSidebarColor, // Deeper bluish tint for properties
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -1225,7 +1487,7 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.05),
+        color: _themeRightSubSectionColor,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -1503,7 +1765,7 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: _themeRightSubSectionInnerColor,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.black12, width: 1.5),
       ),
@@ -1526,12 +1788,17 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
             _propertyTextInput(_formatName(hintKey), hintKey),
             if (colorKey != null || sizeKey != null) const SizedBox(height: 12),
           ],
-          if (colorKey != null) ...[
-            _colorPresetIconDropdown(colorKey),
-            if (sizeKey != null) const SizedBox(height: 16),
-          ],
-          if (sizeKey != null) 
-            _propertySegmentedInput("", sizeKey),
+          if (colorKey != null || sizeKey != null) 
+            Row(
+              children: [
+                if (colorKey != null) ...[
+                  _colorPresetIconDropdown(colorKey),
+                  if (sizeKey != null) const SizedBox(width: 12),
+                ],
+                if (sizeKey != null) 
+                  _sizePresetIconDropdown(sizeKey),
+              ],
+            ),
           if (weightKey != null) ...[
             const SizedBox(height: 12),
             _propertyFontWeightInput("Font Weight", weightKey),
@@ -1543,57 +1810,60 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
 
   Widget _colorPresetIconDropdown(String key) {
     final currentColor = currentProps[key] as Color? ?? Colors.black;
-    final palette = [
-      const Color(0xFF1E1E4C), // Default HDFC Blue
-      const Color(0xFF004C8F), // Added New Blue
-      const Color(0xFF0B1F5E), // Darker Navy
-      const Color(0xFF1E40AF), // Deep Blue
-      const Color(0xFF3B82F6), // Bright primary Blue
-      const Color(0xFFE5EDF4), // Light blue tint
-      Colors.black,
-      Colors.black87,
-      Colors.grey.shade800,
-      Colors.grey.shade500,
-      Colors.grey.shade200,
-      Colors.white,
-      const Color(0xFFE11D48), // Rose Red / Danger
-      const Color(0xFF16A34A), // Emerald Green / Success
-      const Color(0xFFEA580C), // Orange / Warning
-    ];
+    final palette = _extendedColorPalette;
+
     return PopupMenuButton<Color>(
       tooltip: "Color preset",
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       offset: const Offset(0, 40),
       onSelected: (color) => setState(() => currentProps[key] = color),
-      itemBuilder: (context) => palette
-          .map((color) => PopupMenuItem(
-                value: color,
-                child: Row(
-                  children: [
-                    Container(
-                        width: 24,
-                        height: 24,
-                        decoration: BoxDecoration(
-                            color: color,
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.black12))),
-                    const SizedBox(width: 12),
-                    Text(
-                        '#${color.toARGB32().toRadixString(16).substring(2).toUpperCase()}',
-                        style: const TextStyle(fontWeight: FontWeight.w600)),
-                  ],
+      itemBuilder: (context) => [
+        PopupMenuItem(
+          value: currentColor, // Safe fallback value if they click empty space
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: SizedBox(
+            width: 244, // 7 columns * (28 width) + 6 * 8 spacing = 196 + 48 = 244
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: palette.map((color) => GestureDetector(
+                onTap: () {
+                  Navigator.pop(context, color);
+                },
+                child: MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: Container(
+                    width: 28,
+                    height: 28,
+                    decoration: BoxDecoration(
+                      color: color,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: currentColor == color ? Colors.black : Colors.black12, 
+                        width: currentColor == color ? 2.5 : 1
+                      ),
+                      boxShadow: currentColor == color 
+                        ? [BoxShadow(color: color.withOpacity(0.4), blurRadius: 4, spreadRadius: 1)]
+                        : null,
+                    ),
+                  ),
                 ),
-              ))
-          .toList(),
+              )).toList(),
+            ),
+          ),
+        ),
+      ],
       child: Container(
         width: 36,
         height: 36,
+        alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: currentColor,
-          shape: BoxShape.circle,
-          border: Border.all(color: Colors.black26, width: 1.5),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.black87, width: 1.5),
         ),
+        child: Icon(Icons.format_color_fill, color: currentColor, size: 20),
       ),
     );
   }

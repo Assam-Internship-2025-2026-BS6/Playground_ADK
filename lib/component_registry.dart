@@ -356,7 +356,7 @@ final List<ComponentMetadata> componentRegistry = [
       'showShadow': true,
       'showTitle': true,
       'borderRadius': 20.0,
-      'tintColor': Colors.white,
+      'tintColor': const Color(0xFF3B82F6),
     },
     builder: (Map<String, dynamic> props, {bool isFullScreen = false, VoidCallback? onUpdate}) {
       final bool showTitle = props['showTitle'] ?? true;
@@ -366,7 +366,7 @@ final List<ComponentMetadata> componentRegistry = [
         opacity: (props['opacity'] as num?)?.toDouble() ?? 0.12,
         showShadow: props['showShadow'] ?? true,
         borderRadius: (props['borderRadius'] as num?)?.toDouble() ?? 20.0,
-        tintColor: props['tintColor'] ?? Colors.white,
+        tintColor: props['tintColor'] ?? const Color(0xFF3B82F6),
         child: showTitle
             ? const Center(
                 child: dk.Text(
