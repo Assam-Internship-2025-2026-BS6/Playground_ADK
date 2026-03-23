@@ -890,6 +890,9 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
             // Render all properties dynamically, grouped by category
             ...() {
               final Map<String, List<Widget>> groups = {
+                "Label Style": [],
+                "Input Style": [],
+                "Input Restrictions": [],
                 "Text Customization": [],
                 "Checkbox Customization": [],
                 "Image & Appearance": [],
@@ -977,8 +980,19 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
                 } else if (key == 'size' && currentProps[key] is String) {
                   prefix = 'component';
                   type = 'size';
+                } else if (key.endsWith('Weight') && currentProps[key] is FontWeight) {
+                  prefix = key.substring(0, key.length - 6);
+                  type = 'weight';
+                } else if (key.endsWith('Weight') && currentProps[key] is FontWeight) {
+                  prefix = key.substring(0, key.length - 6);
+                  type = 'weight';
+                } else if (key.endsWith('Hint') && currentProps[key] is String) {
+                  prefix = key.substring(0, key.length - 4);
+                  type = 'hint';
                 } else if (currentProps[key] is String &&
                     !key.endsWith('Size') &&
+                    !key.endsWith('Weight') &&
+                    !key.endsWith('Hint') &&
                     !key.endsWith('Color') &&
                     selectedComponent?.options?.containsKey(key) != true) {
                   if (key == 'buttonText') { prefix = 'button'; type = 'text'; }
@@ -1078,12 +1092,14 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
                 final sizeKey = types['size'];
                 final textKey = types['text'];
                 final hintKey = types['hint'];
+                final weightKey = types['weight'];
 
-                if (colorKey != null || sizeKey != null || textKey != null || hintKey != null) {
+                if (colorKey != null || sizeKey != null || textKey != null || hintKey != null || weightKey != null) {
                   if (colorKey != null) processedKeys.add(colorKey);
                   if (sizeKey != null) processedKeys.add(sizeKey);
                   if (textKey != null) processedKeys.add(textKey);
                   if (hintKey != null) processedKeys.add(hintKey);
+                  if (weightKey != null) processedKeys.add(weightKey);
 
                   String title = prefix == 'component'
                       ? _formatName(selectedComponent!.name)
@@ -1115,7 +1131,7 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
                   }
 
                   groups[groupName]!
-                      .add(_presetBox(title, colorKey, sizeKey, textKey: textKey, hintKey: hintKey));
+                      .add(_presetBox(title, colorKey, sizeKey, textKey: textKey, hintKey: hintKey, weightKey: weightKey));
                 }
               });
 
@@ -1132,17 +1148,23 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
                 String groupName = "General Options";
                 if (lower.contains('checkbox')) {
                   groupName = "Checkbox Customization";
+                } else if (lower.contains('restrict')) {
+                  groupName = "Input Restrictions";
+                } else if (lower.contains('label')) {
+                  groupName = "Label Style";
+                } else if (lower.contains('input') || lower.contains('hint')) {
+                  groupName = "Input Style";
                 } else if (lower.contains('text') ||
                     lower.contains('title') ||
                     lower.contains('subtitle') ||
-                    lower.contains('label') ||
-                    lower.contains('hint') ||
                     lower.contains('font') ||
                     lower.contains('password')) {
                   groupName = "Text Customization";
                 } else if (lower.contains('image') ||
                     lower.contains('qr') ||
-                    lower.contains('path')) {
+                    lower.contains('path') ||
+                    lower.contains('radius') ||
+                    lower.contains('opacity')) {
                   groupName = "Image & Appearance";
                 }
 
@@ -1153,6 +1175,9 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
 
               // Render ordered groups
               for (String groupName in [
+                "Label Style",
+                "Input Style",
+                "Input Restrictions",
                 "Text Customization",
                 "Checkbox Customization",
                 "Image & Appearance",
@@ -1473,7 +1498,7 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
     );
   }
 
-  Widget _presetBox(String title, String? colorKey, String? sizeKey, {String? textKey, String? hintKey}) {
+  Widget _presetBox(String title, String? colorKey, String? sizeKey, {String? textKey, String? hintKey, String? weightKey}) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
@@ -1507,6 +1532,10 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
           ],
           if (sizeKey != null) 
             _propertySegmentedInput("", sizeKey),
+          if (weightKey != null) ...[
+            const SizedBox(height: 12),
+            _propertyFontWeightInput("Font Weight", weightKey),
+          ],
         ],
       ),
     );

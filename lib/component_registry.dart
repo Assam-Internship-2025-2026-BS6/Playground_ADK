@@ -1,5 +1,6 @@
 import 'component_metadata.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:designkit/designkit.dart'
     hide
         Text,
@@ -196,16 +197,46 @@ final List<ComponentMetadata> componentRegistry = [
     category: 'Molecules',
     defaultProps: {
       'label': 'Customer ID/ User ID',
-      'hintText': 'Enter your ID',
+      'labelColor': const Color(0xFF1E1E4C),
+      'labelSize': 'Medium',
+      'labelWeight': FontWeight.normal,
+      'inputHint': 'Enter your ID',
+      'inputColor': Colors.black87,
+      'inputSize': 'Medium',
+      'inputWeight': FontWeight.normal,
       'width': 700.0,
       'xOffset': 0.0,
       'yOffset': 0.0,
 },
+    options: {
+      'labelSize': ['Small', 'Medium', 'Large'],
+      'inputSize': ['Small', 'Medium', 'Large'],
+    },
     builder: (Map<String, dynamic> props, {bool isFullScreen = false, VoidCallback? onUpdate}) {
+      final labelSize = props['labelSize'] ?? 'Medium';
+      double labelFontSize = 32.0;
+      if (labelSize == 'Small') labelFontSize = 24.0;
+      if (labelSize == 'Large') labelFontSize = 40.0;
+
+      final inputSize = props['inputSize'] ?? 'Medium';
+      double inputFontSize = 36.0;
+      if (inputSize == 'Small') inputFontSize = 24.0;
+      if (inputSize == 'Large') inputFontSize = 50.0;
+
       return LabeledInputField(
         label: props['label'] ?? 'Customer ID/ User ID',
-        hintText: props['hintText'] ?? 'Enter your ID',
+        hintText: props['inputHint'] ?? 'Enter your ID',
         width: (props['width'] as num?)?.toDouble() ?? 700.0,
+        labelColor: props['labelColor'] ?? const Color(0xFF1E1E4C),
+        labelFontSize: labelFontSize,
+        labelWeight: props['labelWeight'] ?? FontWeight.normal,
+        inputColor: props['inputColor'] ?? Colors.black87,
+        inputFontSize: inputFontSize,
+        inputWeight: props['inputWeight'] ?? FontWeight.normal,
+        offset: Offset(
+          (props['xOffset'] as num?)?.toDouble() ?? 0.0,
+          -((props['yOffset'] as num?)?.toDouble() ?? 0.0),
+        ),
       );
     },
   ),
@@ -214,16 +245,46 @@ final List<ComponentMetadata> componentRegistry = [
     category: 'Molecules',
     defaultProps: {
       'label': 'Password/ PIN',
-      'hintText': 'Enter password',
+      'labelColor': const Color(0xFF1E1E4C),
+      'labelSize': 'Medium',
+      'labelWeight': FontWeight.normal,
+      'inputHint': 'Enter password',
+      'inputColor': Colors.black87,
+      'inputSize': 'Medium',
+      'inputWeight': FontWeight.normal,
       'width': 700.0,
       'xOffset': 0.0,
       'yOffset': 0.0,
 },
+    options: {
+      'labelSize': ['Small', 'Medium', 'Large'],
+      'inputSize': ['Small', 'Medium', 'Large'],
+    },
     builder: (Map<String, dynamic> props, {bool isFullScreen = false, VoidCallback? onUpdate}) {
+      final labelSize = props['labelSize'] ?? 'Medium';
+      double labelFontSize = 32.0;
+      if (labelSize == 'Small') labelFontSize = 24.0;
+      if (labelSize == 'Large') labelFontSize = 40.0;
+
+      final inputSize = props['inputSize'] ?? 'Medium';
+      double inputFontSize = 36.0;
+      if (inputSize == 'Small') inputFontSize = 24.0;
+      if (inputSize == 'Large') inputFontSize = 50.0;
+
       return PasswordField(
         label: props['label'] ?? 'Password/ PIN',
-        hintText: props['hintText'] ?? 'Enter password',
+        hintText: props['inputHint'] ?? 'Enter password',
         width: (props['width'] as num?)?.toDouble() ?? 700.0,
+        labelColor: props['labelColor'] ?? const Color(0xFF1E1E4C),
+        labelFontSize: labelFontSize,
+        labelWeight: props['labelWeight'] ?? FontWeight.normal,
+        inputColor: props['inputColor'] ?? Colors.black87,
+        inputFontSize: inputFontSize,
+        inputWeight: props['inputWeight'] ?? FontWeight.normal,
+        offset: Offset(
+          (props['xOffset'] as num?)?.toDouble() ?? 0.0,
+          -((props['yOffset'] as num?)?.toDouble() ?? 0.0),
+        ),
       );
     },
   ),
@@ -365,6 +426,10 @@ final List<ComponentMetadata> componentRegistry = [
       'fontWeight': FontWeight.normal,
       'size': 'Medium',
       'disabled': false,
+      'restrictNumbers': false,
+      'restrictAlphabets': false,
+      'restrictSpecialCharacters': false,
+      'restrictCopyPaste': false,
       'xOffset': 0.0,
       'yOffset': 0.0,
 },
@@ -382,6 +447,17 @@ final List<ComponentMetadata> componentRegistry = [
         fontSize = 36.0;
       }
 
+      final List<FilteringTextInputFormatter> formatters = [];
+      if (props['restrictNumbers'] ?? false) {
+        formatters.add(FilteringTextInputFormatter.deny(RegExp(r'[0-9]')));
+      }
+      if (props['restrictAlphabets'] ?? false) {
+        formatters.add(FilteringTextInputFormatter.deny(RegExp(r'[a-zA-Z]')));
+      }
+      if (props['restrictSpecialCharacters'] ?? false) {
+        formatters.add(FilteringTextInputFormatter.deny(RegExp(r'[^a-zA-Z0-9\s]')));
+      }
+
       return dk.TextField(
         hintText: props['hintText'] ?? 'Enter text',
         isPassword: props['isPassword'] ?? false,
@@ -392,6 +468,11 @@ final List<ComponentMetadata> componentRegistry = [
         fontWeight: props['fontWeight'] ?? FontWeight.normal,
         fontSize: fontSize,
         enabled: !(props['disabled'] ?? false),
+        keyboardType: (props['restrictAlphabets'] ?? false) && !(props['restrictNumbers'] ?? false)
+            ? TextInputType.number
+            : TextInputType.text,
+        inputFormatters: formatters.isEmpty ? null : formatters,
+        enableInteractiveSelection: !(props['restrictCopyPaste'] ?? false),
         offset: Offset(
           (props['xOffset'] as num?)?.toDouble() ?? 0.0,
           -((props['yOffset'] as num?)?.toDouble() ?? 0.0),
@@ -593,6 +674,7 @@ final List<ComponentMetadata> componentRegistry = [
       'activeColor': const Color(0xFF1E1E4C),
       'labelColor': Colors.black87,
       'fontWeight': FontWeight.normal,
+      'disabled': false,
       'xOffset': 0.0,
       'yOffset': 0.0,
 },
@@ -621,6 +703,7 @@ final List<ComponentMetadata> componentRegistry = [
               (props['xOffset'] as num?)?.toDouble() ?? 0.0,
               -((props['yOffset'] as num?)?.toDouble() ?? 0.0),
             ),
+            disabled: props['disabled'] ?? false,
             onChanged: (val) {
               setState(() {
                 props['value'] = val;
