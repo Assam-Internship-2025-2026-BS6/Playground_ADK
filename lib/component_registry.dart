@@ -237,20 +237,28 @@ final List<ComponentMetadata> componentRegistry = [
         'Savings Account - 1234',
         'Current Account - 5678',
         'Fixed Deposit - 9012',
+        'Salary Account - 3456',
+        'Business Account - 7890',
+        'NRI Account - 1122',
       ],
       'width': 300.0,
-      'activeColor': const Color(0xFF1E1E4C),
+      'activeColor': AppColors.hdfcBlue,
+      'disabled': false,
       'xOffset': 0.0,
       'yOffset': 0.0,
-},
+    },
     options: {
       'value': [
         'Savings Account - 1234',
         'Current Account - 5678',
         'Fixed Deposit - 9012',
+        'Salary Account - 3456',
+        'Business Account - 7890',
+        'NRI Account - 1122',
       ],
     },
-    builder: (Map<String, dynamic> props, {bool isFullScreen = false, VoidCallback? onUpdate}) {
+    builder: (Map<String, dynamic> props,
+        {bool isFullScreen = false, VoidCallback? onUpdate}) {
       return StatefulBuilder(
         builder: (context, setState) {
           return dk.Dropdown(
@@ -258,7 +266,8 @@ final List<ComponentMetadata> componentRegistry = [
             value: props['value'],
             items: List<String>.from(props['items'] ?? []),
             width: (props['width'] as num?)?.toDouble() ?? 300.0,
-            activeColor: props['activeColor'] ?? const Color(0xFF1E1E4C),
+            activeColor: props['activeColor'] ?? AppColors.hdfcBlue,
+            enabled: !(props['disabled'] ?? false),
             offset: Offset(
               (props['xOffset'] as num?)?.toDouble() ?? 0.0,
               -((props['yOffset'] as num?)?.toDouble() ?? 0.0),
