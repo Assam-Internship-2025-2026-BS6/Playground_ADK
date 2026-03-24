@@ -1,0 +1,169 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - develop
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+
+      # Checkout repository
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Install Gitleaks
+      - name: Install Gitleaks
+        run: |
+          curl -s https://api.github.com/repos/gitleaks/gitleaks/releases/latest \
+          | grep "browser_download_url.*linux_x64.tar.gz" \
+          | cut -d '"' -f 4 \
+          | wget -i -
+
+          tar -xzf gitleaks_*_linux_x64.tar.gz
+          sudo mv gitleaks /usr/local/bin/
+          gitleaks version
+
+      # Run Secret Scan
+      - name: Gitleaks Secret Scan
+        run: gitleaks detect --source . --verbose
+
+      # Setup Flutter
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.41.4"
+
+      # Cache Flutter dependencies
+      - name: Cache Flutter packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.pub-cache
+          key: ${{ runner.os }}-flutter-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-flutter-
+
+      # Install dependencies
+      - name: Install dependencies
+        run: flutter pub get
+
+      # Static Code Analysis
+      - name: Flutter Analyze
+        run: flutter analyze || true
+
+      # Run Unit Tests
+      - name: Flutter Test
+        run: flutter test || true
+
+      # Build Flutter Web
+      - name: Build Flutter Web
+        run: flutter build web --release
+
+      # SonarQube Scan
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@v2
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+
+      # Configure AWS Credentials
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      # Login to Amazon ECR
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # Build Docker Image
+      - name: Build Docker Image
+        run: |
+          docker build -t ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/designkit-web:${{ github.sha }} .
+          docker tag ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/designkit-web:${{ github.sha }} \
+          ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/designkit-web:latest
+
+      # Install Trivy (stable method)
+      - name: Install Trivy
+        run: |
+          sudo apt-get update
+          sudo apt-get install wget apt-transport-https gnupg lsb-release -y
+          wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
+          echo "deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | sudo tee /etc/apt/sources.list.d/trivy.list
+          sudo apt-get update
+          sudo apt-get install trivy -y
+
+      # Scan Docker Image (report only)
+      - name: Scan Docker Image
+        run: |
+          trivy image --severity HIGH,CRITICAL --ignore-unfixed \
+          ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/designkit-web:${{ github.sha }} || true
+
+      # Push Image to ECR
+      - name: Push Docker Image
+        run: |
+          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/designkit-web:${{ github.sha }}
+          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/designkit-web:latest
+
+      # Deploy to EC2
+      - name: Deploy to EC2 with Rollback
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            echo "Saving previous container image..."
+            PREVIOUS_IMAGE=$(docker inspect --format='{{.Config.Image}}' designkit-container 2>/dev/null || echo "")
+
+            echo "Login to ECR..."
+            aws ecr get-login-password --region ${{ secrets.AWS_REGION }} \
+            | docker login --username AWS --password-stdin \
+            ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
+
+            echo "Pulling new image..."
+            docker pull ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/designkit-web:latest
+
+            echo "Stopping old container..."
+            docker stop designkit-container || true
+            docker rm designkit-container || true
+
+            echo "Starting new container..."
+            docker run -d -p 80:80 \
+              --name designkit-container \
+              ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/designkit-web:latest
+
+            sleep 10
+
+            echo "Running health check..."
+            curl -f http://localhost || (
+              echo "Deployment failed. Rolling back..."
+
+              docker stop designkit-container || true
+              docker rm designkit-container || true
+
+              if [ ! -z "$PREVIOUS_IMAGE" ]; then
+                docker run -d -p 80:80 \
+                  --name designkit-container \
+                  $PREVIOUS_IMAGE
+              fi
+
+              exit 1
+            )
+
+      # Smoke Test
+      - name: Smoke Test
+        run: |
+          sleep 10
+          curl -f http://${{ secrets.EC2_HOST }} || exit 1
+
+      # Health Check
+      - name: Health Check
+        run: |
+          curl -f http://${{ secrets.EC2_HOST }} || exit 1
