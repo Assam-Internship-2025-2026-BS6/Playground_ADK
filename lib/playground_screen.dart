@@ -569,28 +569,70 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
     );
   }
 
-  List<Color> get _extendedColorPalette => [
-    // Monochromes
+  List<Color> get _defaultPalette => [
     Colors.white, const Color(0xFFF3F4F6), const Color(0xFFE5E7EB), const Color(0xFFD1D5DB), const Color(0xFF9CA3AF), const Color(0xFF4B5563), Colors.black,
-    // Reds
-    const Color(0xFFFEE2E2), const Color(0xFFFECACA), const Color(0xFFFCA5A5), const Color(0xFFF87171), const Color(0xFFEF4444), const Color(0xFFDC2626), const Color(0xFFB91C1C),
-    // Oranges
-    const Color(0xFFFFEDD5), const Color(0xFFFED7AA), const Color(0xFFFDBA74), const Color(0xFFFB923C), const Color(0xFFF97316), const Color(0xFFEA580C), const Color(0xFFC2410C),
-    // Yellows
-    const Color(0xFFFEF9C3), const Color(0xFFFEF08A), const Color(0xFFFDE047), const Color(0xFFFACC15), const Color(0xFFEAB308), const Color(0xFFCA8A04), const Color(0xFFA16207),
-    // Greens
-    const Color(0xFFDCFCE7), const Color(0xFFBBF7D0), const Color(0xFF86EFAC), const Color(0xFF4ADE80), const Color(0xFF22C55E), const Color(0xFF16A34A), const Color(0xFF15803D),
-    // Blues
-    const Color(0xFFEFF6FF), const Color(0xFFDBEAFE), const Color(0xFFBFDBFE), const Color(0xFF93C5FD), const Color(0xFF60A5FA), const Color(0xFF3B82F6), const Color(0xFF2563EB),
-    // Theme Blues
-    const Color(0xFFF6F7F8), const Color(0xFFE5EDF4), const Color(0xFFBAE6FD), const Color(0xFF38BDF8), const Color(0xFF0284C7), const Color(0xFF004C8F), const Color(0xFF0F326A),
-    // Purples
-    const Color(0xFFF3E8FF), const Color(0xFFE9D5FF), const Color(0xFFD8B4FE), const Color(0xFFC084FC), const Color(0xFFA855F7), const Color(0xFF9333EA), const Color(0xFF7E22CE),
+    const Color(0xFFFEE2E2), const Color(0xFFFECACA), const Color(0xFFF87171), const Color(0xFFEF4444), const Color(0xFFDC2626), const Color(0xFFB91C1C),
+    const Color(0xFFFFEDD5), const Color(0xFFFED7AA), const Color(0xFFFB923C), const Color(0xFFF97316), const Color(0xFFEA580C), const Color(0xFFC2410C),
+    const Color(0xFFFEF9C3), const Color(0xFFFEF08A), const Color(0xFFFACC15), const Color(0xFFEAB308), const Color(0xFFCA8A04), const Color(0xFFA16207),
+    const Color(0xFFDCFCE7), const Color(0xFFBBF7D0), const Color(0xFF4ADE80), const Color(0xFF22C55E), const Color(0xFF16A34A), const Color(0xFF15803D),
+    const Color(0xFFF3E8FF), const Color(0xFFE9D5FF), const Color(0xFFC084FC), const Color(0xFFA855F7), const Color(0xFF9333EA), const Color(0xFF7E22CE),
   ];
 
-  Widget _buildColorGridPopup(Color currentColor, ValueChanged<Color> onChanged) {
-    final palette = _extendedColorPalette;
+  List<Color> get _hdfcPalette => [
+    const Color(0xFFEFF6FF), const Color(0xFFDBEAFE), const Color(0xFFBFDBFE), const Color(0xFF93C5FD), const Color(0xFF60A5FA), const Color(0xFF3B82F6), const Color(0xFF2563EB),
+    const Color(0xFFF6F7F8), const Color(0xFFE5EDF4), const Color(0xFFBAE6FD), const Color(0xFF38BDF8), const Color(0xFF0284C7), const Color(0xFF004C8F), const Color(0xFF0F326A),
+  ];
 
+  Widget _buildColorGrid(List<Color> palette, Color currentColor, Function(Color) onSelected) {
+    return Wrap(
+      spacing: 10,
+      runSpacing: 10,
+      children: palette.map((color) => GestureDetector(
+        onTap: () => onSelected(color),
+        child: MouseRegion(
+          cursor: SystemMouseCursors.click,
+          child: Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: color,
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: currentColor.value == color.value ? const Color(0xFF004C8F) : Colors.black12, 
+                width: currentColor.value == color.value ? 3.0 : 1.5
+              ),
+              boxShadow: currentColor.value == color.value 
+                ? [BoxShadow(color: color.withOpacity(0.4), blurRadius: 8, spreadRadius: 2)]
+                : [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 2, offset: const Offset(0, 2))],
+            ),
+            child: currentColor.value == color.value
+                ? const Icon(Icons.check, size: 16, color: Colors.white)
+                : null,
+          ),
+        ),
+      )).toList(),
+    );
+  }
+
+  Widget _buildColorPickerContent(Color currentColor, Function(Color) onSelected) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text("Default Color Palette", 
+          style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black54, letterSpacing: 0.5)),
+        const SizedBox(height: 12),
+        _buildColorGrid(_defaultPalette, currentColor, onSelected),
+        const SizedBox(height: 24),
+        const Text("HDFC Color Palette", 
+          style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF004C8F), letterSpacing: 0.5)),
+        const SizedBox(height: 12),
+        _buildColorGrid(_hdfcPalette, currentColor, onSelected),
+      ],
+    );
+  }
+
+  Widget _buildColorGridPopup(Color currentColor, ValueChanged<Color> onChanged) {
     return PopupMenuButton<Color>(
       tooltip: 'Pick Color',
       icon: Container(
@@ -601,45 +643,23 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
           color: currentColor,
           shape: BoxShape.circle,
           border: Border.all(color: Colors.black26),
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 4)],
         ),
       ),
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      offset: const Offset(0, 40),
-      onSelected: onChanged,
+      elevation: 8,
+      offset: const Offset(0, 48),
+      padding: EdgeInsets.zero,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       itemBuilder: (context) => [
         PopupMenuItem(
-          value: currentColor, // Safe fallback
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          enabled: false,
+          padding: const EdgeInsets.all(20),
           child: SizedBox(
-            width: 244,
-            child: Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: palette.map((color) => GestureDetector(
-                onTap: () {
-                  Navigator.pop(context, color);
-                },
-                child: MouseRegion(
-                  cursor: SystemMouseCursors.click,
-                  child: Container(
-                    width: 28,
-                    height: 28,
-                    decoration: BoxDecoration(
-                      color: color,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: currentColor == color ? Colors.black : Colors.black12, 
-                        width: currentColor == color ? 2.5 : 1
-                      ),
-                      boxShadow: currentColor == color 
-                        ? [BoxShadow(color: color.withOpacity(0.4), blurRadius: 4, spreadRadius: 1)]
-                        : null,
-                    ),
-                  ),
-                ),
-              )).toList(),
-            ),
+            width: 280,
+            child: _buildColorPickerContent(currentColor, (color) {
+              onChanged(color);
+              Navigator.pop(context);
+            }),
           ),
         ),
       ],
@@ -1810,47 +1830,24 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
 
   Widget _colorPresetIconDropdown(String key) {
     final currentColor = currentProps[key] as Color? ?? Colors.black;
-    final palette = _extendedColorPalette;
 
     return PopupMenuButton<Color>(
       tooltip: "Color preset",
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      offset: const Offset(0, 40),
+      elevation: 8,
+      offset: const Offset(0, 48),
+      padding: EdgeInsets.zero,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       onSelected: (color) => setState(() => currentProps[key] = color),
       itemBuilder: (context) => [
         PopupMenuItem(
-          value: currentColor, // Safe fallback value if they click empty space
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          enabled: false,
+          padding: const EdgeInsets.all(20),
           child: SizedBox(
-            width: 244, // 7 columns * (28 width) + 6 * 8 spacing = 196 + 48 = 244
-            child: Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: palette.map((color) => GestureDetector(
-                onTap: () {
-                  Navigator.pop(context, color);
-                },
-                child: MouseRegion(
-                  cursor: SystemMouseCursors.click,
-                  child: Container(
-                    width: 28,
-                    height: 28,
-                    decoration: BoxDecoration(
-                      color: color,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: currentColor == color ? Colors.black : Colors.black12, 
-                        width: currentColor == color ? 2.5 : 1
-                      ),
-                      boxShadow: currentColor == color 
-                        ? [BoxShadow(color: color.withOpacity(0.4), blurRadius: 4, spreadRadius: 1)]
-                        : null,
-                    ),
-                  ),
-                ),
-              )).toList(),
-            ),
+            width: 280,
+            child: _buildColorPickerContent(currentColor, (color) {
+              setState(() => currentProps[key] = color);
+              Navigator.pop(context);
+            }),
           ),
         ),
       ],
